@@ -18,7 +18,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             background-color: #f3f4f6;
             margin: 0;
-            padding: 30px 20px 20px 20px;
+            padding: 35px 10px 20px 10px;
             padding-bottom: 300px;
             display: flex;
             flex-direction: column;
@@ -30,24 +30,26 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 35px;
             width: 100%;
+            gap: 40px;
         }
         .layer {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            align-items: center;
+            gap: 15px;
             width: 100%;
             position: relative;
         }
         
+        /* Vertikale Verbindungslinie nach unten zur nächsten Schicht */
         .layer::after {
             content: "";
             position: absolute;
-            bottom: -20px;
+            bottom: -25px;
             left: 50%;
             width: 2px;
-            height: 20px;
+            height: 25px;
             background: #bdc3c7;
             z-index: 1;
         }
@@ -56,18 +58,19 @@
         .couple-unit {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             position: relative;
         }
         
+        /* Personenkarten */
         .person-card {
-            width: 115px;
+            width: 105px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.06);
             text-align: center;
-            padding: 10px 6px;
-            min-height: 95px;
+            padding: 10px 4px;
+            min-height: 90px;
             border: 3px solid #bdc3c7;
             position: relative;
             display: flex;
@@ -78,22 +81,24 @@
             cursor: pointer;
         }
         .person-card.male { border-color: #3498db; }
-        .person-card.female { border-color: #f78fb3; }
+        .person-card.female { border-color: #f78fb3; } /* Rosa Umrandung für Frauen */
         
+        /* Schwarzes Trauer-Dreieck oben links */
         .person-card.deceased::before {
             content: "";
             position: absolute;
             top: 0; left: 0; width: 0; height: 0;
-            border-top: 22px solid black;
-            border-right: 22px solid transparent;
+            border-top: 20px solid black;
+            border-right: 20px solid transparent;
             border-top-left-radius: 4px;
             z-index: 12;
         }
 
-        .name-display { font-weight: bold; font-size: 0.8rem; color: #2c3e50; }
-        .info-display { font-size: 0.65rem; color: #7f8c8d; line-height: 1.2; }
-        .rings-label { font-size: 1.1rem; color: #f1c40f; z-index: 15; }
+        .name-display { font-weight: bold; font-size: 0.75rem; color: #2c3e50; line-height: 1.2; }
+        .info-display { font-size: 0.6rem; color: #7f8c8d; line-height: 1.2; }
+        .rings-label { font-size: 1rem; color: #f1c40f; z-index: 15; }
 
+        /* Eingabemaske am unteren Rand */
         .form-container {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: white; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
@@ -110,7 +115,7 @@
 </head>
 <body>
 
-    <div class="version-stamp">Code-Version: 06.11.2026, 22:15:00 Uhr</div>
+    <div class="version-stamp">Code-Version: 06.11.2026, 22:20:00 Uhr</div>
 
     <h1>🌳 Mein Stammbaum Profi</h1>
 
@@ -149,14 +154,14 @@
 
         let familyTree;
         try {
-            familyTree = JSON.parse(localStorage.getItem('isolatedFinalTreeStreamV2')) || initialData;
+            familyTree = JSON.parse(localStorage.getItem('isolatedFinalTreeStreamV3')) || initialData;
         } catch(e) {
             familyTree = initialData;
         }
 
         function saveAndRefresh() {
             try {
-                localStorage.setItem('isolatedFinalTreeStreamV2', JSON.stringify(familyTree));
+                localStorage.setItem('isolatedFinalTreeStreamV3', JSON.stringify(familyTree));
             } catch(e) {}
             renderTree();
         }
@@ -176,59 +181,48 @@
             document.getElementById('gender').value = p.gender || "m";
             document.getElementById('deathDate').value = p.deathDate || "";
             
-            document.getElementById('formTitle').innerText = `✏️ ${p.firstName} bearbeiten`;
+            document.getElementById('formTitle').innerText = "✏️ " + p.firstName + " bearbeiten";
             document.getElementById('formBox').style.display = "block";
         }
 
         function buildCard(id) {
             const p = familyTree[id] || { firstName: "Unbekannt", lastName: "", birthDate: "", birthPlace: "", deathDate: "", gender: "m" };
             const isDeceased = p.deathDate && p.deathDate.trim() !== "";
-            return `
-                <div class="person-card ${p.gender === 'm' ? 'male' : 'female'} ${isDeceased ? 'deceased' : ''}" onclick="handleCardClick('${id}')">
-                    <div class="name-display">${p.firstName}<br>${p.lastName}</div>
-                    <div class="info-display">
-                        <div>* ${p.birthDate || ''}</div>
-                        ${p.birthPlace ? `<div>📍 ${p.birthPlace}</div>` : ''}
-                        ${p.deathDate ? `<div>† ${p.deathDate}</div>` : '<div>Lebend</div>'}
-                    </div>
-                </div>
-            `;
+            
+            let cardClass = "person-card " + (p.gender === 'm' ? 'male' : 'female');
+            if (isDeceased) cardClass += " deceased";
+
+            let locHtml = p.birthPlace ? "<div>📍 " + p.birthPlace + "</div>" : "";
+            let deathHtml = p.deathDate ? "<div>† " + p.deathDate + "</div>" : "<div>Lebend</div>";
+
+            return "<div class='" + cardClass + "' onclick='handleCardClick(\"" + id + "\")'>" +
+                   "<div class='name-display'>" + p.firstName + "<br>" + p.lastName + "</div>" +
+                   "<div class='info-display'>" +
+                   "<div>* " + (p.birthDate || '') + "</div>" +
+                   locHtml + deathHtml +
+                   "</div></div>";
         }
 
         function renderTree() {
             const canvas = document.getElementById('treeCanvas');
             if(!canvas) return;
             
-            canvas.innerHTML = `
-                <div class="layer">
-                    <div class="couple-unit">
-                        ${buildCard("p4")}<div class="rings-label">💍</div>${buildCard("p5")}
-                    </div>
-                    <div style="width: 30px;"></div>
-                    <div class="couple-unit">
-                        ${buildCard("p8")}<div class="rings-label">💍</div>${buildCard("p9")}
-                    </div>
-                </div>
-                <div class="layer">
-                    <div class="couple-unit">
-                        ${buildCard("p2")}<div class="rings-label">💍</div>${buildCard("p3")}
-                    </div>
-                </div>
-                <div class="layer">
-                    <div class="couple-unit">
-                        ${buildCard("p1")}<div class="rings-label">💍</div>${buildCard("p6")}
-                    </div>
-                </div>
-                <div class="layer">
-                    ${buildCard("p7")}
-                </div>
-            `;
+            canvas.innerHTML = 
+                "<div class='layer'>" +
+                    "<div class='couple-unit'>" + buildCard("p4") + "<div class='rings-label'>💍</div>" + buildCard("p5") + "</div>" +
+                    "<div style='width: 15px;'></div>" +
+                    "<div class='couple-unit'>" + buildCard("p8") + "<div class='rings-label'>💍</div>" + buildCard("p9") + "</div>" +
+                "</div>" +
+                "<div class='layer'>" +
+                    "<div class='couple-unit'>" + buildCard("p2") + "<div class='rings-label'>💍</div>" + buildCard("p3") + "</div>" +
+                "</div>" +
+                "<div class='layer'>" +
+                    "<div class='couple-unit'>" + buildCard("p1") + "<div class='rings-label'>💍</div>" + buildCard("p6") + "</div>" +
+                "</div>" +
+                "<div class='layer'>" +
+                    buildCard("p7") +
+                "</div>";
         }
 
         document.getElementById('personForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const id = document.getElementById('activeId').value;
-            
-            if (familyTree[id]) {
-                familyTree[id].firstName = document.getElementById('firstName').value;
-                familyTree[id].lastName = document.getElementById('lastName').value;
