@@ -126,7 +126,8 @@
     </div>
 
     <script>
-        // Fehlerfreies Daten-Objekt
+        // Wir erzwingen hier ein völlig neues, sauberes Speicher-Label ("forcedCleanTree"), 
+        // damit alte kaputte Daten im Handyspeicher komplett ignoriert werden!
         let defaultData = {
             "1": { id: 1, firstName: "Alexander", lastName: "Presler", birthDate: "1982", birthPlace: "München", deathDate: "", gender: "m", father: 2, mother: 3 },
             "2": { id: 2, firstName: "Vladimir", lastName: "Presler", birthDate: "01.08.1959", birthPlace: "", deathDate: "", gender: "m", father: 4, mother: 5 },
@@ -134,11 +135,10 @@
             "5": { id: 5, firstName: "Raisa", lastName: "Gredneva", birthDate: "1941", birthPlace: "", deathDate: "12.10.2020", gender: "f", father: 0, mother: 0 }
         };
 
-        // Neues Storage-Key um alte fehlerhafte Cache-Daten komplett zu überschreiben
-        let familyTree = JSON.parse(localStorage.getItem('perfectFinalTree')) || defaultData;
+        let familyTree = JSON.parse(localStorage.getItem('forcedCleanTree')) || defaultData;
 
         function saveAndRefresh() {
-            localStorage.setItem('perfectFinalTree', JSON.stringify(familyTree));
+            localStorage.setItem('forcedCleanTree', JSON.stringify(familyTree));
             renderTree();
         }
 
