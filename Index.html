@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mein Familienstammbaum</title>
+<style>
+body {
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+background-color: #f5f7fa;
+margin: 0;
+padding: 20px;
+color: #333;
+}
+h1 {
+text-align: center;
+font-size: 1.5rem;
+color: #2c3e50;
+}
+.tree-container {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 20px;
+margin-top: 30px;
+}
+.generation {
+display: flex;
+justify-content: center;
+gap: 15px;
+width: 100%;
+flex-wrap: wrap;
+}
+.person-card {
+background: white;
+border-left: 5px solid #3498db;
+padding: 12px 15px;
+border-radius: 8px;
+box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+min-width: 140px;
+text-align: center;
+}
+.person-card.female {
+border-left-color: #e74c3c;
+}
+.name {
+font-weight: bold;
+font-size: 1rem;
+}
+.dates {
+font-size: 0.8rem;
+color: #7f8c8d;
+margin-top: 4px;
+}
+.label {
+font-size: 0.7rem;
+text-transform: uppercase;
+color: #bdc3c7;
+margin-bottom: 2px;
+}
+</style>
+</head>
+<body>
+
+<h1>🌳 Mein Stammbaum</h1>
+
+<div class="tree-container" id="tree">
+<!-- Generation 1: Großeltern -->
+<div class="label">Großeltern</div>
+<div class="generation" id="gen-grandparents"></div>
+
+<!-- Generation 2: Eltern -->
+<div class="label">Eltern</div>
+<div class="generation" id="gen-parents"></div>
+
+<!-- Generation 3: Ich / Geschwister -->
+<div class="label">Kinder</div>
+<div class="generation" id="gen-children"></div>
+</div>
+
+<script>
+// Hier trägst du deine Familiendaten ein (JSON-Format)
+const familyData = [
+{ id: 1, name: "Opa Müller", gnd: "m", birth: "1940", death: "2015", gen: "grandparents" },
+{ id: 2, name: "Oma Müller", gnd: "f", birth: "1943", death: "", gen: "grandparents" },
+{ id: 3, name: "Papa Müller", gnd: "m", birth: "1968", death: "", gen: "parents" },
+{ id: 4, name: "Mama Müller", gnd: "f", birth: "1970", death: "", gen: "parents" },
+{ id: 5, name: "Ich", gnd: "m", birth: "1998", death: "", gen: "children" },
+{ id: 6, name: "Schwester", gnd: "f", birth: "2002", death: "", gen: "children" }
+ ];
+
+// Funktion, die die Karten auf dem Smartphone anzeigt
+function renderTree() {
+familyData.forEach(person => {
+const container = document.getElementById(gen-${person.gen}); if (container) { const card = document.createElement('div'); card.className =person-card ${person.gnd === 'f' ? 'female' : ''};
+
+const deathInfo = person.death ? † ${person.death}: ''; const dateText = person.birth ?* ${person.birth} ${deathInfo}` : '';
+
+card.innerHTML = &lt;div class="name"&gt;${person.name}</div>
+<div class="dates">${dateText}</div>
+`;
+container.appendChild(card);
+}
+});
+}
+
+// Stammbaum beim Laden der Seite aufbauen
+renderTree();
+</script>
+</body>
+</html>
