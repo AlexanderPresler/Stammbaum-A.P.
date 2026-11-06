@@ -3,259 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stammbaum App</title>
+    <title>Stammbaum</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            font-family: sans-serif;
             background-color: #f3f4f6;
             margin: 0;
             padding: 20px;
-            color: #333;
-            padding-bottom: 280px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        h1 {
-            font-size: 1.3rem;
-            color: #2c3e50;
-            margin-bottom: 30px;
+        h1 { font-size: 1.2rem; color: #2c3e50; }
+        .tree { display: flex; flex-direction: column; gap: 40px; align-items: center; margin-top: 20px; }
+        .generation { display: flex; justify-content: center; gap: 20px; width: 100%; position: relative; }
+        
+        /* Linien-Logik über CSS-Pseudoelemente */
+        .generation::after {
+            content: ""; position: absolute; bottom: -20px; left: 25%; right: 25%; height: 2px; background: #bdc3c7; z-index: 1;
         }
-        .tree-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            max-width: 600px;
-        }
-        .generation {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            margin-bottom: 50px;
-            position: relative;
-        }
-        .couple-block {
-            display: flex;
-            gap: 15px;
-            position: relative;
-        }
+        .generation:last-child::after { display: none; }
+
         .node {
-            width: 90px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.06);
-            text-align: center;
-            padding: 10px 5px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 95px;
-            border-top: 4px solid #bdc3c7;
-            z-index: 2;
+            width: 90px; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            text-align: center; padding: 10px 5px; min-height: 90px; border-top: 4px solid #bdc3c7;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2;
         }
         .node.male { border-top-color: #3498db; }
         .node.female { border-top-color: #e74c3c; }
         
-        .node.placeholder {
-            border: 2px dashed #bdc3c7;
-            background: #eaeded;
-            cursor: pointer;
-            color: #7f8c8d;
-            font-size: 0.7rem;
-            font-weight: bold;
-            border-top: 2px dashed #bdc3c7;
-        }
-        .node.placeholder .plus {
-            font-size: 1.1rem;
-            margin-bottom: 4px;
-            background: #bdc3c7;
-            color: white;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .avatar {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            background: #eee;
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-        }
-        .name {
-            font-weight: bold;
-            font-size: 0.75rem;
-            word-break: break-word;
-            line-height: 1.1;
-        }
-        .date {
-            font-size: 0.65rem;
-            color: #7f8c8d;
-            margin-top: 2px;
-        }
-        .delete-btn {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            background: none;
-            border: none;
-            color: #e74c3c;
-            font-size: 0.7rem;
-            cursor: pointer;
-        }
-        .form-container {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            background: white;
-            padding: 15px;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
-            border-top-left-radius: 16px;
-            border-top-right-radius: 16px;
-            max-height: 250px;
-            overflow-y: auto;
-            z-index: 1000;
-        }
-        .form-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 8px; }
-        form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        input, button { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; }
-        input[type="text"] { grid-column: span 2; }
-        button.submit-btn { grid-column: span 2; background: #2ecc71; color: white; border: none; font-weight: bold; }
-        button.cancel-btn { grid-column: span 2; background: #95a5a6; color: white; border: none; }
+        .avatar { font-size: 1.2rem; margin-bottom: 4px; }
+        .name { font-weight: bold; font-size: 0.75rem; }
+        .date { font-size: 0.65rem; color: #7f8c8d; margin-top: 2px; }
     </style>
 </head>
 <body>
 
     <h1>🌳 Mein Stammbaum</h1>
 
-    <div class="tree-container" id="treeCanvas">
-        <!-- JavaScript generiert die Struktur hier -->
+    <div class="tree">
+        <!-- Großeltern-Ebene -->
+        <div class="generation">
+            <div class="node male"><div class="avatar">👤</div><div class="name">Uropa P.</div><div class="date">1910</div></div>
+            <div class="node female"><div class="avatar">👩</div><div class="name">Uroma P.</div><div class="date">1915</div></div>
+            <div class="node male"><div class="avatar">👤</div><div class="name">Uropa L.</div><div class="date">1920</div></div>
+            <div class="node female"><div class="avatar">👩</div><div class="name">Raisa G.</div><div class="date">1941</div></div>
+        </div>
+
+        <!-- Eltern-Ebene -->
+        <div class="generation">
+            <div class="node male"><div class="avatar">👤</div><div class="name">Vladimir L.</div><div class="date">1959</div></div>
+            <div class="node female"><div class="avatar">👩</div><div class="name">Swetlana P.</div><div class="date">1961</div></div>
+        </div>
+
+        <!-- Du-Ebene -->
+        <div class="generation">
+            <div class="node male"><div class="avatar">👤</div><div class="name">Alexander P.</div><div class="date">1982</div></div>
+        </div>
     </div>
 
-    <div class="form-container" id="formBox" style="display: none;">
-        <div class="form-title" id="formTitle">Person hinzufügen</div>
-        <form id="personForm">
-            <input type="hidden" id="targetRole">
-            <input type="hidden" id="targetIndex" value="-1">
-            <input type="text" id="name" placeholder="Vor- und Nachname" required>
-            <input type="number" id="birth" placeholder="Geburtsjahr">
-            <input type="number" id="death" placeholder="Todesjahr (leer lassen wenn lebend)">
-            <button type="submit" class="submit-btn">Speichern</button>
-            <button type="button" class="cancel-btn" onclick="closeForm()">Abbrechen</button>
-        </form>
-    </div>
-
-    <script>
-        let defaultData = {
-            1: { name: "Alexander Presler", birth: "1982", death: "", gnd: "m", father: 2, mother: 3 },
-            2: { name: "Vladimir Lagutochkin", birth: "1959", death: "", gnd: "m", father: 4, mother: 5 },
-            3: { name: "Swetlana Presler", birth: "1961", death: "", gnd: "f", father: 6, mother: 7 },
-            5: { name: "Raisa Gredneva", birth: "1941", death: "", gnd: "f", father: 0, mother: 0 }
-        };
-
-        // Nutzen ein neues Storage-Key, um alte fehlerhafte Daten im Browser zu überschreiben
-        let familyTree = JSON.parse(localStorage.getItem('fixedFamilyTreeValid')) || defaultData;
-
-        function saveTree() {
-            localStorage.setItem('fixedFamilyTreeValid', JSON.stringify(familyTree));
-            renderTree();
-        }
-
-        function openAddForm(parentRole, childId) {
-            document.getElementById('personForm').reset();
-            document.getElementById('targetRole').value = parentRole;
-            document.getElementById('targetIndex').value = childId;
-            document.getElementById('formTitle').innerText = parentRole === 'father' ? "➕ Vater hinzufügen" : "➕ Mutter hinzufügen";
-            document.getElementById('formBox').style.display = "block";
-        }
-
-        function closeForm() {
-            document.getElementById('formBox').style.display = "none";
-        }
-
-        function deleteNode(id) {
-            if(confirm("Möchtest du diese Person entfernen?")) {
-                if (id === 1) {
-                    familyTree[1] = { name: "Ich / Hauptperson", birth: "", death: "", gnd: "m", father: 0, mother: 0 };
-                } else {
-                    delete familyTree[id];
-                    for (let key in familyTree) {
-                        if(familyTree[key].father == id) familyTree[key].father = 0;
-                        if(familyTree[key].mother == id) familyTree[key].mother = 0;
-                    }
-                }
-                saveTree();
-            }
-        }
-
-        function createNodeHTML(id, role, childId) {
-            const person = familyTree[id];
-            if (person && person.name) {
-                const avatarEmoji = person.gnd === 'm' ? '👤' : '👩';
-                const dateText = person.birth ? `${person.birth}–${person.death || 'Lebend'}` : '';
-                return `
-                    <div class="node ${person.gnd === 'm' ? 'male' : 'female'}">
-                        <button class="delete-btn" onclick="event.stopPropagation(); deleteNode(${id})">🗑️</button>
-                        <div class="avatar">${avatarEmoji}</div>
-                        <div class="name">${person.name}</div>
-                        <div class="date">${dateText}</div>
-                    </div>
-                `;
-            } else {
-                const roleLabel = role === 'father' ? 'Vater<br>hinzufügen' : 'Mutter<br>hinzufügen';
-                return `
-                    <div class="node placeholder" onclick="openAddForm('${role}', ${childId})">
-                        <div class="plus">+</div>
-                        <div>${roleLabel}</div>
-                    </div>
-                `;
-            }
-        }
-
-        function renderTree() {
-            const canvas = document.getElementById('treeCanvas');
-            
-            const p1 = familyTree[1] || { father: 0, mother: 0 };
-            const fId = p1.father;
-            const mId = p1.mother;
-            
-            const p2 = familyTree[fId] || { father: 0, mother: 0 };
-            const p3 = familyTree[mId] || { father: 0, mother: 0 };
-
-            canvas.innerHTML = `
-                <!-- Generation 3: Großeltern (von Vater und Mutter) -->
-                <div class="generation">
-                    <div class="couple-block">
-                        ${createNodeHTML(p2.father, 'father', fId)}
-                        ${createNodeHTML(p2.mother, 'mother', fId)}
-                    </div>
-                    <div style="width: 20px;"></div>
-                    <div class="couple-block">
-                        ${createNodeHTML(p3.father, 'father', mId)}
-                        ${createNodeHTML(p3.mother, 'mother', mId)}
-                    </div>
-                </div>
-                <!-- Generation 2: Eltern -->
-                <div class="generation">
-                    <div class="couple-block" style="gap: 60px;">
-                        ${createNodeHTML(fId, 'father', 1)}
-                        ${createNodeHTML(mId, 'mother', 1)}
-                    </div>
-                </div>
-                <!-- Generation 1: Hauptperson (Du selbst) -->
-                <div class="generation">
-                    ${createNodeHTML(1, 'self', 0)}
-                </div>
-            `;
-        }
-
-        document.getElementById('personForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+</body>
+</html>
