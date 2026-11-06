@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mein Stammbaum Profi</title>
+    <title>Stammbaum Profi</title>
     <style>
-        /* Versionsanzeige oben links */
         .version-stamp {
             position: absolute;
             top: 5px;
@@ -27,7 +26,6 @@
         }
         h1 { font-size: 1.2rem; color: #2c3e50; margin-bottom: 25px; }
         
-        /* Das exakte Stammbaum-Verästelungsnetzwerk aus deinem Bild */
         .tree-grid {
             display: flex;
             flex-direction: column;
@@ -43,7 +41,6 @@
             position: relative;
         }
         
-        /* Durchgehende Verbindungslinien */
         .layer::after {
             content: "";
             position: absolute;
@@ -63,7 +60,6 @@
             position: relative;
         }
         
-        /* Personenkarten */
         .person-card {
             width: 115px;
             background: white;
@@ -82,9 +78,8 @@
             cursor: pointer;
         }
         .person-card.male { border-color: #3498db; }
-        .person-card.female { border-color: #f78fb3; } /* Rosa Umrandung */
+        .person-card.female { border-color: #f78fb3; }
         
-        /* Schwarzes Trauer-Dreieck oben links */
         .person-card.deceased::before {
             content: "";
             position: absolute;
@@ -99,7 +94,6 @@
         .info-display { font-size: 0.65rem; color: #7f8c8d; line-height: 1.2; }
         .rings-label { font-size: 1.1rem; color: #f1c40f; z-index: 15; }
 
-        /* Versteckte Eingabemaske am unteren Rand */
         .form-container {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: white; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
@@ -116,37 +110,31 @@
 </head>
 <body>
 
-    <!-- Die Versionskontrolle -->
-    <div class="version-stamp">Code-Version: 06.11.2026, 21:58:44 Uhr</div>
+    <div class="version-stamp">Code-Version: 06.11.2026, 22:15:00 Uhr</div>
 
     <h1>🌳 Mein Stammbaum Profi</h1>
 
     <div class="tree-grid" id="treeCanvas"></div>
 
-    <!-- Die verdeckte Maske -->
     <div class="form-container" id="formBox">
         <div class="form-title" id="formTitle">Person bearbeiten</div>
         <form id="personForm">
             <input type="hidden" id="activeId">
-            
             <input type="text" id="firstName" placeholder="Vorname" required>
             <input type="text" id="lastName" placeholder="Nachname" required>
             <input type="text" id="birthDate" placeholder="Geburtsdatum">
             <input type="text" id="birthPlace" placeholder="Geburtsort">
-            
             <select id="gender">
                 <option value="m">Männlich (Blauer Rand)</option>
                 <option value="f">Weiblich (Rosa Rand)</option>
             </select>
             <input type="text" id="deathDate" placeholder="Todestag (leer lassen wenn lebend)">
-            
             <button type="submit" class="submit-btn full-width">Speichern</button>
             <button type="button" class="cancel-btn full-width" onclick="closeForm()">Abbrechen</button>
         </form>
     </div>
 
     <script>
-        // Absturzsichere Datenbasis (Deine Familie aus der Bildübersicht)
         let initialData = {
             "p1": { firstName: "Alexander", lastName: "Presler", birthDate: "1982", birthPlace: "München", deathDate: "", gender: "m" },
             "p2": { firstName: "Vladimir", lastName: "Lagutochkin", birthDate: "1959", birthPlace: "", deathDate: "", gender: "m" },
@@ -159,17 +147,16 @@
             "p9": { firstName: "Großmutter", lastName: "Presler", birthDate: "1935", birthPlace: "", deathDate: "", gender: "f" }
         };
 
-        // Neues, komplett isoliertes Label um Cache-Konflikte zu brechen
         let familyTree;
         try {
-            familyTree = JSON.parse(localStorage.getItem('isolatedFinalTreeStream')) || initialData;
+            familyTree = JSON.parse(localStorage.getItem('isolatedFinalTreeStreamV2')) || initialData;
         } catch(e) {
             familyTree = initialData;
         }
 
         function saveAndRefresh() {
             try {
-                localStorage.setItem('isolatedFinalTreeStream', JSON.stringify(familyTree));
+                localStorage.setItem('isolatedFinalTreeStreamV2', JSON.stringify(familyTree));
             } catch(e) {}
             renderTree();
         }
@@ -182,7 +169,6 @@
             
             document.getElementById('personForm').reset();
             document.getElementById('activeId').value = id;
-            
             document.getElementById('firstName').value = p.firstName || "";
             document.getElementById('lastName').value = p.lastName || "";
             document.getElementById('birthDate').value = p.birthDate || "";
@@ -195,7 +181,6 @@
         }
 
         function buildCard(id) {
-            // Ausfallsicherung: Falls eine ID im Speicher fehlt, bricht das System nicht ab
             const p = familyTree[id] || { firstName: "Unbekannt", lastName: "", birthDate: "", birthPlace: "", deathDate: "", gender: "m" };
             const isDeceased = p.deathDate && p.deathDate.trim() !== "";
             return `
@@ -215,7 +200,6 @@
             if(!canvas) return;
             
             canvas.innerHTML = `
-                <!-- Generation 1: Großeltern ganz oben -->
                 <div class="layer">
                     <div class="couple-unit">
                         ${buildCard("p4")}<div class="rings-label">💍</div>${buildCard("p5")}
@@ -225,9 +209,26 @@
                         ${buildCard("p8")}<div class="rings-label">💍</div>${buildCard("p9")}
                     </div>
                 </div>
-
-                <!-- Generation 2: Eltern darunter -->
                 <div class="layer">
                     <div class="couple-unit">
                         ${buildCard("p2")}<div class="rings-label">💍</div>${buildCard("p3")}
                     </div>
+                </div>
+                <div class="layer">
+                    <div class="couple-unit">
+                        ${buildCard("p1")}<div class="rings-label">💍</div>${buildCard("p6")}
+                    </div>
+                </div>
+                <div class="layer">
+                    ${buildCard("p7")}
+                </div>
+            `;
+        }
+
+        document.getElementById('personForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = document.getElementById('activeId').value;
+            
+            if (familyTree[id]) {
+                familyTree[id].firstName = document.getElementById('firstName').value;
+                familyTree[id].lastName = document.getElementById('lastName').value;
