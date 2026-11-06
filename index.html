@@ -42,6 +42,7 @@
             position: relative;
         }
         
+        /* Die grauen Verbindungslinien zwischen den Generationen */
         .layer::after {
             content: "";
             position: absolute;
@@ -61,6 +62,7 @@
             position: relative;
         }
         
+        /* Personenkarten */
         .person-card {
             width: 105px;
             background: white;
@@ -79,8 +81,9 @@
             cursor: pointer;
         }
         .person-card.male { border-color: #3498db; }
-        .person-card.female { border-color: #f78fb3; }
+        .person-card.female { border-color: #f78fb3; } /* Rosa Umrandung für Frauen */
         
+        /* Schwarzes Trauer-Dreieck oben links */
         .person-card.deceased::before {
             content: "";
             position: absolute;
@@ -95,6 +98,7 @@
         .info-display { font-size: 0.6rem; color: #7f8c8d; line-height: 1.2; }
         .rings-label { font-size: 1rem; color: #f1c40f; z-index: 15; }
 
+        /* Versteckte Eingabemaske am unteren Rand */
         .form-container {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: white; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
@@ -111,7 +115,7 @@
 </head>
 <body>
 
-    <div class="version-stamp">Coderstellung: 06.11.2026, 22:30:00 Uhr | Version: 3.1</div>
+    <div class="version-stamp">Coderstellung: 06.11.2026, 22:36:00 Uhr | Version: 3.2</div>
 
     <h1>🌳 Mein Stammbaum Profi</h1>
 
@@ -136,8 +140,7 @@
     </div>
 
     <script>
-        // Komplett bereinigte, fest eingebundene Objektdaten, um Speicherfehler auszuschließen
-        var familyTree = {
+        var initialData = {
             "p4": { firstName: "Uropa", lastName: "Lagutochkin", birthDate: "1920", birthPlace: "", deathDate: "1995", gender: "m" },
             "p5": { firstName: "Raisa", lastName: "Gredneva", birthDate: "1941", birthPlace: "", deathDate: "12.10.2020", gender: "f" },
             "p8": { firstName: "Großvater", lastName: "Presler", birthDate: "1930", birthPlace: "", deathDate: "2005", gender: "m" },
@@ -149,72 +152,85 @@
             "p7": { firstName: "Emma", lastName: "Presler", birthDate: "2018", birthPlace: "", deathDate: "", gender: "f" }
         };
 
-        function renderTree() {
-            var canvas = document.getElementById('treeCanvas');
-            if(!canvas) return;
-            canvas.innerHTML = "";
-
-            var structure = [
-                [["p4", "m", "Uropa"], ["p5", "f", "Uroma"], ["p8", "m", "Großvater"], ["p9", "f", "Großmutter"]],
-                [["p2", "m", "Vater"], ["p3", "f", "Mutter"]],
-                [["p1", "m", "Ich"], ["p6", "f", "Partnerin"]],
-                [["p7", "f", "Kind"]]
-            ];
-
-            for (var i = 0; i < structure.length; i++) {
-                var layerDiv = document.createElement('div');
-                layerDiv.className = "layer";
-                
-                var items = structure[i];
-                if (items.length === 4) {
-                    // Großeltern-Paarung splitten
-                    layerDiv.appendChild(createPair(items[0], items[1]));
-                    var spacer = document.createElement('div'); spacer.style.width = "15px"; layerDiv.appendChild(spacer);
-                    layerDiv.appendChild(createPair(items[2], items[3]));
-                } else if (items.length === 2) {
-                    layerDiv.appendChild(createPair(items[0], items[1]));
-                } else {
-                    layerDiv.appendChild(createCard(items[0][0], items[0][1], items[0][2]));
-                }
-                canvas.appendChild(layerDiv);
-            }
+        var familyTree;
+        try {
+            familyTree = JSON.parse(localStorage.getItem('finalTreeSecureStorageV4')) || initialData;
+        } catch(e) {
+            familyTree = initialData;
         }
 
-        function createPair(item1, item2) {
-            var unit = document.createElement('div');
-            unit.className = "couple-unit";
-            unit.appendChild(createCard(item1[0], item1[1], item1[2]));
-            var ring = document.createElement('div'); ring.className = "rings-label"; ring.innerText = "💍"; unit.appendChild(ring);
-            unit.appendChild(createCard(item2[0], item2[1], item2[2]));
-            return unit;
+        function saveAndRefresh() {
+            try {
+                localStorage.setItem('finalTreeSecureStorageV4', JSON.stringify(familyTree));
+            } catch(e) {}
+            renderTree();
         }
 
-        function createCard(id, defGender, label) {
+        function closeForm() { document.getElementById('formBox').style.display = "none"; }
+
+        function handleCardClick(id) {
             var p = familyTree[id];
+            if(!p) return;
+            
+            document.getElementById('personForm').reset();
+            document.getElementById('activeId').value = id;
+            document.getElementById('firstName').value = p.firstName || "";
+            document.getElementById('lastName').value = p.lastName || "";
+            document.getElementById('birthDate').value = p.birthDate || "";
+            document.getElementById('birthPlace').value = p.birthPlace || "";
+            document.getElementById('gender').value = p.gender || "m";
+            document.getElementById('deathDate').value = p.deathDate || "";
+            
+            document.getElementById('formTitle').innerText = "✏️ " + p.firstName + " bearbeiten";
+            document.getElementById('formBox').style.display = "block";
+        }
+
+        function buildCardElement(id) {
+            var p = familyTree[id] || { firstName: "Unbekannt", lastName: "", birthDate: "", birthPlace: "", deathDate: "", gender: "m" };
             var isDeceased = p.deathDate && p.deathDate.trim() !== "";
             
             var card = document.createElement('div');
             card.className = "person-card " + (p.gender === 'm' ? 'male' : 'female');
             if (isDeceased) card.className += " deceased";
             
-            card.onclick = function() {
-                document.getElementById('personForm').reset();
-                document.getElementById('activeId').value = id;
-                document.getElementById('firstName').value = p.firstName;
-                document.getElementById('lastName').value = p.lastName;
-                document.getElementById('birthDate').value = p.birthDate;
-                document.getElementById('birthPlace').value = p.birthPlace;
-                document.getElementById('gender').value = p.gender;
-                document.getElementById('deathDate').value = p.deathDate;
-                document.getElementById('formTitle').innerText = "✏️ " + p.firstName + " bearbeiten";
-                document.getElementById('formBox').style.display = "block";
-            };
+            card.onclick = function() { handleCardClick(id); };
 
-            var nameDiv = document.createElement('div'); nameDiv.className = "name-display"; nameDiv.innerText = p.firstName + "\n" + p.lastName; card.appendChild(nameDiv);
-            var infoDiv = document.createElement('div'); infoDiv.className = "info-display"; infoDiv.innerHTML = "<div>* " + p.birthDate + "</div>";
-            if(p.birthPlace) infoDiv.innerHTML += "<div>📍 " + p.birthPlace + "</div>";
-            infoDiv.innerHTML += "<div>" + (isDeceased ? "† " + p.deathDate : "Lebend") + "</div>";
+            var nameDiv = document.createElement('div');
+            nameDiv.className = "name-display";
+            nameDiv.innerText = p.firstName + "\n" + p.lastName;
+            card.appendChild(nameDiv);
+
+            var infoDiv = document.createElement('div');
+            infoDiv.className = "info-display";
+            
+            var bDiv = document.createElement('div');
+            bDiv.innerText = "* " + (p.birthDate || '');
+            infoDiv.appendChild(bDiv);
+            
+            if(p.birthPlace) {
+                var pDiv = document.createElement('div');
+                pDiv.innerText = "📍 " + p.birthPlace;
+                infoDiv.appendChild(pDiv);
+            }
+            
+            var dDiv = document.createElement('div');
+            dDiv.innerText = p.deathDate ? "† " + p.deathDate : "Lebend";
+            infoDiv.appendChild(dDiv);
+
             card.appendChild(infoDiv);
             return card;
         }
 
+        function renderTree() {
+            var canvas = document.getElementById('treeCanvas');
+            if(!canvas) return;
+            canvas.innerHTML = "";
+
+            // Schicht 1 (Großeltern)
+            var l1 = document.createElement('div'); l1.className = "layer";
+            var cu1 = document.createElement('div'); cu1.className = "couple-unit";
+            cu1.appendChild(buildCardElement("p4"));
+            var r1 = document.createElement('div'); r1.className = "rings-label"; r1.innerText = "💍"; cu1.appendChild(r1);
+            cu1.appendChild(buildCardElement("p5"));
+            l1.appendChild(cu1);
+            
