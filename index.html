@@ -42,7 +42,7 @@
             position: relative;
         }
         
-        /* Vertikale Verbindungslinie nach unten zur nächsten Schicht */
+        /* Die grauen Verbindungslinien zwischen den Generationen */
         .layer::after {
             content: "";
             position: absolute;
@@ -98,7 +98,7 @@
         .info-display { font-size: 0.6rem; color: #7f8c8d; line-height: 1.2; }
         .rings-label { font-size: 1rem; color: #f1c40f; z-index: 15; }
 
-        /* Eingabemaske am unteren Rand */
+        /* Versteckte Eingabemaske am unteren Rand */
         .form-container {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: white; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
@@ -115,7 +115,8 @@
 </head>
 <body>
 
-    <div class="version-stamp">Code-Version: 06.11.2026, 22:20:00 Uhr</div>
+    <!-- Dynamischer Zeitstempel für Echtzeit-Erkennung -->
+    <div class="version-stamp">Geladen um: <span id="liveClock">--:--:--</span></div>
 
     <h1>🌳 Mein Stammbaum Profi</h1>
 
@@ -140,7 +141,15 @@
     </div>
 
     <script>
-        let initialData = {
+        // Echtzeit-Uhr starten, damit du sofort siehst, dass die Seite frisch geladen ist
+        function updateClock() {
+            var now = new Date();
+            var timeString = now.toLocaleDateString('de-DE') + ', ' + now.toLocaleTimeString('de-DE') + ' Uhr';
+            document.getElementById('liveClock').innerText = timeString;
+        }
+        updateClock();
+
+        var initialData = {
             "p1": { firstName: "Alexander", lastName: "Presler", birthDate: "1982", birthPlace: "München", deathDate: "", gender: "m" },
             "p2": { firstName: "Vladimir", lastName: "Lagutochkin", birthDate: "1959", birthPlace: "", deathDate: "", gender: "m" },
             "p3": { firstName: "Swetlana", lastName: "Presler", birthDate: "1961", birthPlace: "", deathDate: "", gender: "f" },
@@ -152,16 +161,16 @@
             "p9": { firstName: "Großmutter", lastName: "Presler", birthDate: "1935", birthPlace: "", deathDate: "", gender: "f" }
         };
 
-        let familyTree;
+        var familyTree;
         try {
-            familyTree = JSON.parse(localStorage.getItem('isolatedFinalTreeStreamV3')) || initialData;
+            familyTree = JSON.parse(localStorage.getItem('finalTreeDynamicClock')) || initialData;
         } catch(e) {
             familyTree = initialData;
         }
 
         function saveAndRefresh() {
             try {
-                localStorage.setItem('isolatedFinalTreeStreamV3', JSON.stringify(familyTree));
+                localStorage.setItem('finalTreeDynamicClock', JSON.stringify(familyTree));
             } catch(e) {}
             renderTree();
         }
@@ -169,7 +178,7 @@
         function closeForm() { document.getElementById('formBox').style.display = "none"; }
 
         function handleCardClick(id) {
-            const p = familyTree[id];
+            var p = familyTree[id];
             if(!p) return;
             
             document.getElementById('personForm').reset();
@@ -185,44 +194,45 @@
             document.getElementById('formBox').style.display = "block";
         }
 
-        function buildCard(id) {
-            const p = familyTree[id] || { firstName: "Unbekannt", lastName: "", birthDate: "", birthPlace: "", deathDate: "", gender: "m" };
-            const isDeceased = p.deathDate && p.deathDate.trim() !== "";
+        function buildCardElement(id) {
+            var p = familyTree[id] || { firstName: "Unbekannt", lastName: "", birthDate: "", birthPlace: "", deathDate: "", gender: "m" };
+            var isDeceased = p.deathDate && p.deathDate.trim() !== "";
             
-            let cardClass = "person-card " + (p.gender === 'm' ? 'male' : 'female');
-            if (isDeceased) cardClass += " deceased";
+            var card = document.createElement('div');
+            card.className = "person-card " + (p.gender === 'm' ? 'male' : 'female');
+            if (isDeceased) card.className += " deceased";
+            
+            card.onclick = function() { handleCardClick(id); };
 
-            let locHtml = p.birthPlace ? "<div>📍 " + p.birthPlace + "</div>" : "";
-            let deathHtml = p.deathDate ? "<div>† " + p.deathDate + "</div>" : "<div>Lebend</div>";
+            var nameDiv = document.createElement('div');
+            nameDiv.className = "name-display";
+            nameDiv.innerText = p.firstName + "\n" + p.lastName;
+            card.appendChild(nameDiv);
 
-            return "<div class='" + cardClass + "' onclick='handleCardClick(\"" + id + "\")'>" +
-                   "<div class='name-display'>" + p.firstName + "<br>" + p.lastName + "</div>" +
-                   "<div class='info-display'>" +
-                   "<div>* " + (p.birthDate || '') + "</div>" +
-                   locHtml + deathHtml +
-                   "</div></div>";
+            var infoDiv = document.createElement('div');
+            infoDiv.className = "info-display";
+            
+            var bDiv = document.createElement('div');
+            bDiv.innerText = "* " + (p.birthDate || '');
+            infoDiv.appendChild(bDiv);
+            
+            if(p.birthPlace) {
+                var pDiv = document.createElement('div');
+                pDiv.innerText = "📍 " + p.birthPlace;
+                infoDiv.appendChild(pDiv);
+            }
+            
+            var dDiv = document.createElement('div');
+            dDiv.innerText = p.deathDate ? "† " + p.deathDate : "Lebend";
+            infoDiv.appendChild(dDiv);
+
+            card.appendChild(infoDiv);
+            return card;
         }
 
         function renderTree() {
-            const canvas = document.getElementById('treeCanvas');
+            var canvas = document.getElementById('treeCanvas');
             if(!canvas) return;
-            
-            canvas.innerHTML = 
-                "<div class='layer'>" +
-                    "<div class='couple-unit'>" + buildCard("p4") + "<div class='rings-label'>💍</div>" + buildCard("p5") + "</div>" +
-                    "<div style='width: 15px;'></div>" +
-                    "<div class='couple-unit'>" + buildCard("p8") + "<div class='rings-label'>💍</div>" + buildCard("p9") + "</div>" +
-                "</div>" +
-                "<div class='layer'>" +
-                    "<div class='couple-unit'>" + buildCard("p2") + "<div class='rings-label'>💍</div>" + buildCard("p3") + "</div>" +
-                "</div>" +
-                "<div class='layer'>" +
-                    "<div class='couple-unit'>" + buildCard("p1") + "<div class='rings-label'>💍</div>" + buildCard("p6") + "</div>" +
-                "</div>" +
-                "<div class='layer'>" +
-                    buildCard("p7") +
-                "</div>";
-        }
+            canvas.innerHTML = "";
 
-        document.getElementById('personForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+            // Schicht 1 (Ganz oben)
