@@ -15,82 +15,75 @@
             flex-direction: column;
             align-items: center;
         }
-        h1 { font-size: 1.3rem; color: #2c3e50; }
+        h1 { font-size: 1.3rem; color: #2c3e50; margin-bottom: 30px; }
         
-        .tree-container {
+        /* Hierarchische Baum-Struktur mit Linien */
+        .tree {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 20px;
-            width: 100%;
         }
-        
-        /* Baum-Layout für hierarchische Linien */
-        .tree-row {
+        .tree ul {
+            padding-top: 20px; position: relative;
+            display: flex; justify-content: center;
+            list-style-type: none; padding-left: 0; margin: 0;
+        }
+        .tree li {
+            text-align: center; list-style-type: none;
+            position: relative; padding: 20px 5px 0 5px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        /* Horizontale Verbindungslinien */
+        .tree li::before, .tree li::after {
+            content: ''; position: absolute; top: 0; right: 50%;
+            border-top: 2px solid #bdc3c7; width: 50%; height: 20px;
+        }
+        .tree li::after { right: auto; left: 50%; border-left: 2px solid #bdc3c7; }
+        .tree li:only-child::after, .tree li:only-child::before { display: none; }
+        .tree li:only-child { padding-top: 0; }
+        .tree li:first-child::before, .tree li:last-child::after { border: 0 none; }
+        .tree li:last-child::before { border-right: 2px solid #bdc3c7; border-radius: 0 5px 0 0; }
+        .tree li:first-child::after { border-radius: 5px 0 0 0; }
+        .tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid #bdc3c7; width: 0; height: 20px; }
+
+        /* Ehepartner-Block nebeneinander */
+        .couple-container {
             display: flex;
-            justify-content: center;
-            gap: 40px;
-            width: 100%;
+            align-items: center;
+            gap: 10px;
             position: relative;
-            margin-bottom: 40px;
         }
-        
-        /* Karten-Design */
+        /* Eheringe zwischen Eheleuten */
+        .rings {
+            font-size: 1.1rem;
+            z-index: 15;
+            background: #f3f4f6;
+            padding: 0 2px;
+        }
+
+        /* Personenkarten-Design */
         .person-card {
-            width: 140px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-            padding: 12px;
-            text-align: center;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            border: 3px solid #bdc3c7;
-            z-index: 10;
+            width: 130px; background: white; border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.06); text-align: center;
+            padding: 12px 8px; min-height: 100px; border: 3px solid #bdc3c7;
+            position: relative; display: flex; flex-direction: column;
+            justify-content: center; gap: 3px; z-index: 10; cursor: pointer;
         }
         .person-card.male { border-color: #3498db; }
-        .person-card.female { border-color: #f78fb3; } /* Rosa Rand */
+        .person-card.female { border-color: #f78fb3; } /* Rosa Umrandung */
         
         /* Schwarzes Trauer-Dreieck oben links */
         .person-card.deceased::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 0;
-            height: 0;
-            border-top: 22px solid black;
-            border-right: 22px solid transparent;
-            border-top-left-radius: 5px;
+            content: ""; position: absolute; top: 0; left: 0; width: 0; height: 0;
+            border-top: 22px solid black; border-right: 22px solid transparent;
+            border-top-left-radius: 4px; z-index: 12;
         }
 
-        .name-display { font-weight: bold; font-size: 0.85rem; margin-top: 5px; }
+        .name-display { font-weight: bold; font-size: 0.85rem; color: #2c3e50; }
         .info-display { font-size: 0.7rem; color: #7f8c8d; line-height: 1.2; }
-        
-        .action-menu {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            justify-content: center;
-            margin-top: 8px;
-            border-top: 1px solid #eee;
-            padding-top: 6px;
-        }
-        .action-btn {
-            background: #eee;
-            border: none;
-            padding: 4px 6px;
-            font-size: 0.65rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .action-btn.add { background: #2ecc71; color: white; }
-        .action-btn.del { background: #e74c3c; color: white; }
 
-        /* Eingabemaske unten */
+        /* Eingabemaske am unteren Rand (Standardmäßig versteckt) */
         .form-container {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: white; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
@@ -99,140 +92,107 @@
         }
         .form-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 8px; color: #2c3e50; }
         form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        input, select, button { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; }
+        input, select, button { padding: 9px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; }
         .full-width { grid-column: span 2; }
         button.submit-btn { background: #2ecc71; color: white; border: none; font-weight: bold; }
         button.cancel-btn { background: #95a5a6; color: white; border: none; }
+        button.del-btn { background: #e74c3c; color: white; border: none; }
     </style>
 </head>
 <body>
 
     <h1>🌳 Mein Stammbaum Profi</h1>
 
-    <div class="tree-container" id="treeCanvas"></div>
+    <div class="tree" id="treeCanvas">
+        <!-- Dynamischer hierarchischer Aufbau über JS -->
+    </div>
 
-    <!-- Eingabeformular -->
+    <!-- Die versteckte Eingabemaske -->
     <div class="form-container" id="formBox">
-        <div class="form-title" id="formTitle">Verwandten hinzufügen</div>
+        <div class="form-title" id="formTitle">Mitglied bearbeiten / hinzufügen</div>
         <form id="personForm">
-            <input type="hidden" id="relType">
-            <input type="hidden" id="sourceId">
+            <input type="hidden" id="activeId">
+            <input type="hidden" id="actionType"> <!-- 'edit', 'add_father', 'add_mother' -->
             
             <input type="text" id="firstName" placeholder="Vorname" required>
             <input type="text" id="lastName" placeholder="Nachname" required>
-            <input type="text" id="birthDate" placeholder="Geburtsdatum (z.B. 1982)">
+            <input type="text" id="birthDate" placeholder="Geburtsdatum (z.B. 01.08.1959)">
             <input type="text" id="birthPlace" placeholder="Geburtsort">
             
             <select id="gender">
                 <option value="m">Männlich (Blauer Rand)</option>
                 <option value="f">Weiblich (Rosa Rand)</option>
             </select>
-            <input type="text" id="deathDate" placeholder="Todestag (leer lassen wenn lebend)">
+            <input type="text" id="deathDate" placeholder="Todestag (leer lassen falls lebend)">
             
             <button type="submit" class="submit-btn full-width">Speichern</button>
-            <button type="button" class="cancel-btn full-width" onclick="closeForm()">Abbrechen</button>
+            <button type="button" class="del-btn" id="deleteBtn" onclick="deleteActiveNode()">Person löschen</button>
+            <button type="button" class="cancel-btn" onclick="closeForm()">Abbrechen</button>
         </form>
     </div>
 
     <script>
-        // Saubere Start-Datenbasis (Du als Ursprung)
-        let defaultData = [
-            {
-                id: 1,
-                firstName: "Alexander",
-                lastName: "Presler",
-                birthDate: "1982",
-                birthPlace: "",
-                deathDate: "",
-                gender: "m"
-            }
-        ];
+        // Strukturierte relationale Datenbasis
+        let defaultData = {
+            1: { id: 1, firstName: "Alexander", lastName: "Presler", birthDate: "1982", birthPlace: "München", deathDate: "", gender: "m", father: 2, mother: 3 },
+            2: { id: 2, firstName: "Vladimir", lastName: "Presler", birthDate: "01.08.1959", birthPlace: "", deathDate: "", gender: "m", father: 4, mother: 5 },
+            3: { id: 3, firstName: "Swetlana", lastName: "Presler", birthDate: "01.06.1961", birthPlace: "", deathDate: "", gender: "f", father: 6, mother: 7 },
+            5: { id: 5, firstName: "Raisa", lastName: "Gredneva", birthDate: "1941", birthPlace: "", deathDate: "12.10.2020", gender: "f", father: 0, mother: 0 }
+        };
 
-        // Neuen Key nutzen, um alte abgestürzte Datensätze im Speicher zu überschreiben
-        let people = JSON.parse(localStorage.getItem('validProfiTreeData')) || defaultData;
+        let familyTree = JSON.parse(localStorage.getItem('ultimateTreePro')) || defaultData;
 
         function saveAndRefresh() {
-            localStorage.setItem('validProfiTreeData', JSON.stringify(people));
+            localStorage.setItem('ultimateTreePro', JSON.stringify(familyTree));
             renderTree();
         }
 
-        function openAddForm(type, sourceId) {
+        function closeForm() { document.getElementById('formBox').style.display = "none"; }
+
+        // Wenn man auf eine existierende Karte klickt, öffnet sich das Optionsmenü
+        function handleCardClick(id) {
+            const p = familyTree[id];
             document.getElementById('personForm').reset();
-            document.getElementById('relType').value = type;
-            document.getElementById('sourceId').value = sourceId;
+            document.getElementById('activeId').value = id;
             
-            if(type === 'Mutter') document.getElementById('gender').value = 'f';
-            if(type === 'Vater') document.getElementById('gender').value = 'm';
+            // Abfrage: Will der Nutzer editieren oder Eltern hinzufügen?
+            const option = prompt(`Was möchtest du für ${p.firstName} tun?\n\nSchreibe:\n'e' zum Bearbeiten\n'v' für Vater hinzufügen\n'm' für Mutter hinzufügen`);
             
-            const p = people.find(person => person.id === parseInt(sourceId));
-            document.getElementById('formTitle').innerText = `${type} für ${p ? p.firstName : ''} hinzufügen`;
-            document.getElementById('formBox').style.display = "block";
-        }
-
-        function closeForm() { 
-            document.getElementById('formBox').style.display = "none"; 
-        }
-
-        function deletePerson(id) {
-            if(confirm("Diese Person wirklich löschen?")) {
-                people = people.filter(p => p.id !== id);
-                saveAndRefresh();
+            if (option === 'e' || option === 'E') {
+                document.getElementById('actionType').value = 'edit';
+                document.getElementById('firstName').value = p.firstName;
+                document.getElementById('lastName').value = p.lastName;
+                document.getElementById('birthDate').value = p.birthDate;
+                document.getElementById('birthPlace').value = p.birthPlace || "";
+                document.getElementById('gender').value = p.gender;
+                document.getElementById('deathDate').value = p.deathDate;
+                document.getElementById('formTitle').innerText = "✏️ Daten ändern";
+                document.getElementById('deleteBtn').style.display = "block";
+                document.getElementById('formBox').style.display = "block";
+            } else if (option === 'v' || option === 'V') {
+                if(p.father) { alert("Vater existiert bereits!"); return; }
+                document.getElementById('actionType').value = 'add_father';
+                document.getElementById('gender').value = 'm';
+                document.getElementById('formTitle').innerText = ` Vater für ${p.firstName} hinzufügen`;
+                document.getElementById('deleteBtn').style.display = "none";
+                document.getElementById('formBox').style.display = "block";
+            } else if (option === 'm' || option === 'M') {
+                if(p.mother) { alert("Mutter existiert bereits!"); return; }
+                document.getElementById('actionType').value = 'add_mother';
+                document.getElementById('gender').value = 'f';
+                document.getElementById('formTitle').innerText = ` Mutter für ${p.firstName} hinzufügen`;
+                document.getElementById('deleteBtn').style.display = "none";
+                document.getElementById('formBox').style.display = "block";
             }
         }
 
-        function renderTree() {
-            const canvas = document.getElementById('treeCanvas');
-            canvas.innerHTML = "";
-
-            const row = document.createElement('div');
-            row.className = "tree-row";
-
-            people.forEach(p => {
-                const card = document.createElement('div');
-                card.className = `person-card ${p.gender === 'm' ? 'male' : 'female'}`;
-                
-                // Aktiviert das schwarze Dreieck, wenn ein Todesdatum existiert
-                if(p.deathDate && p.deathDate.trim() !== "") {
-                    card.classList.add('deceased');
+        function deleteActiveNode() {
+            const id = parseInt(document.getElementById('activeId').value);
+            if(confirm("Diese Person wirklich löschen?")) {
+                delete familyTree[id];
+                for(let key in familyTree) {
+                    if(familyTree[key].father === id) familyTree[key].father = 0;
+                    if(familyTree[key].mother === id) familyTree[key].mother = 0;
                 }
-
-                let infoHtml = `<div>* ${p.birthDate || 'Unbekannt'}</div>`;
-                if(p.birthPlace) infoHtml += `<div>📍 ${p.birthPlace}</div>`;
-                if(p.deathDate) infoHtml += `<div>† ${p.deathDate}</div>`;
-
-                card.innerHTML = `
-                    <div class="name-display">${p.firstName} ${p.lastName}</div>
-                    <div class="info-display">${infoHtml}</div>
-                    <div class="action-menu">
-                        <button class="action-btn add" onclick="openAddForm('Vater', ${p.id})">+ Papa</button>
-                        <button class="action-btn add" onclick="openAddForm('Mutter', ${p.id})">+ Mama</button>
-                        <button class="action-btn del" onclick="deletePerson(${p.id})">🗑️</button>
-                    </div>
-                `;
-                row.appendChild(card);
-            });
-            canvas.appendChild(row);
-        }
-
-        document.getElementById('personForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const newPerson = {
-                id: Date.now(),
-                firstName: document.getElementById('firstName').value,
-                lastName: document.getElementById('lastName').value,
-                birthDate: document.getElementById('birthDate').value,
-                birthPlace: document.getElementById('birthPlace').value,
-                deathDate: document.getElementById('deathDate').value,
-                gender: document.getElementById('gender').value
-            };
-
-            people.push(newPerson);
-            saveAndRefresh();
-            closeForm();
-        });
-
-        renderTree();
-    </script>
-</body>
-</html>
+                saveAndRefresh();
+                closeForm();
