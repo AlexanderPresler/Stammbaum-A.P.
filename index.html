@@ -17,56 +17,69 @@
         }
         h1 { font-size: 1.3rem; color: #2c3e50; margin-bottom: 20px; }
         
-        /* Baum-Layout */
-        .tree-container {
+        /* Das Stammbaum-Diagramm-Netzwerk */
+        .tree {
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 100%;
-            max-width: 600px;
         }
-        .generation {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            margin-bottom: 40px;
-            position: relative;
+        .tree ul {
+            padding-top: 20px; position: relative;
+            display: flex; justify-content: center;
+            list-style-type: none; padding-left: 0; margin: 0;
         }
-        .couple-block {
+        .tree li {
+            text-align: center; list-style-type: none;
+            position: relative; padding: 20px 5px 0 5px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        /* Echte vertikale und horizontale Verbindungslinien */
+        .tree li::before, .tree li::after {
+            content: ''; position: absolute; top: 0; right: 50%;
+            border-top: 2px solid #bdc3c7; width: 50%; height: 20px;
+        }
+        .tree li::after { right: auto; left: 50%; border-left: 2px solid #bdc3c7; }
+        .tree li:only-child::after, .tree li:only-child::before { display: none; }
+        .tree li:only-child { padding-top: 0; }
+        .tree li:first-child::before, .tree li:last-child::after { border: 0 none; }
+        .tree li:last-child::before { border-right: 2px solid #bdc3c7; border-radius: 0 5px 0 0; }
+        .tree li:first-child::after { border-radius: 5px 0 0 0; }
+        .tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid #bdc3c7; width: 0; height: 20px; }
+
+        /* Ehepartner-Block nebeneinander */
+        .couple-container {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             position: relative;
         }
-        
-        /* Horizontale Linien zwischen Paaren */
-        .couple-block::after {
-            content: ""; position: absolute; bottom: -20px; left: 50%;
-            width: 2px; height: 20px; background: #bdc3c7; z-index: 1;
+        .rings {
+            font-size: 1.1rem; z-index: 15; background: #f3f4f6; padding: 0 2px; color: #f1c40f;
         }
-        
-        /* Personenkarten */
+
+        /* Personenkarten-Design */
         .person-card {
-            width: 110px; background: white; border-radius: 8px;
+            width: 125px; background: white; border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.06); text-align: center;
-            padding: 12px 6px; min-height: 95px; border: 3px solid #bdc3c7;
+            padding: 12px 6px; min-height: 100px; border: 3px solid #bdc3c7;
             position: relative; display: flex; flex-direction: column;
             justify-content: center; gap: 3px; z-index: 10; cursor: pointer;
         }
         .person-card.male { border-color: #3498db; }
-        .person-card.female { border-color: #f78fb3; }
+        .person-card.female { border-color: #f78fb3; } /* Rosa Umrandung */
         
+        /* Schwarzes Trauer-Dreieck oben links */
         .person-card.deceased::before {
             content: ""; position: absolute; top: 0; left: 0; width: 0; height: 0;
             border-top: 22px solid black; border-right: 22px solid transparent;
             border-top-left-radius: 4px; z-index: 12;
         }
 
-        .name-display { font-weight: bold; font-size: 0.8rem; color: #2c3e50; word-break: break-word; }
+        .name-display { font-weight: bold; font-size: 0.85rem; color: #2c3e50; }
         .info-display { font-size: 0.65rem; color: #7f8c8d; line-height: 1.2; }
-        .rings { font-size: 1.1rem; z-index: 15; color: #f1c40f; }
 
-        /* Eingabemaske am unteren Rand (Standardmäßig versteckt) */
+        /* Eingabemaske am unteren Rand (Versteckt) */
         .form-container {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: white; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
@@ -86,7 +99,7 @@
 
     <h1>🌳 Mein Stammbaum Profi</h1>
 
-    <div class="tree-container" id="treeCanvas"></div>
+    <div class="tree" id="treeCanvas"></div>
 
     <!-- Das ausgeblendete Formular -->
     <div class="form-container" id="formBox">
@@ -97,7 +110,7 @@
             
             <input type="text" id="firstName" placeholder="Vorname" required>
             <input type="text" id="lastName" placeholder="Nachname" required>
-            <input type="text" id="birthDate" placeholder="Geburtsdatum (z.B. 1982)">
+            <input type="text" id="birthDate" placeholder="Geburtsdatum (z.B. 01.08.1959)">
             <input type="text" id="birthPlace" placeholder="Geburtsort">
             
             <select id="gender">
@@ -113,17 +126,19 @@
     </div>
 
     <script>
+        // Fehlerfreies Daten-Objekt
         let defaultData = {
-            1: { id: 1, firstName: "Alexander", lastName: "Presler", birthDate: "1982", birthPlace: "", deathDate: "", gender: "m", father: 2, mother: 3 },
-            2: { id: 2, firstName: "Vladimir", lastName: "Presler", birthDate: "01.08.1959", birthPlace: "", deathDate: "", gender: "m", father: 4, mother: 5 },
-            3: { id: 3, firstName: "Swetlana", lastName: "Presler", birthDate: "01.06.1961", birthPlace: "", deathDate: "", gender: "f", father: 6, mother: 7 },
-            5: { id: 5, firstName: "Raisa", lastName: "Gredneva", birthDate: "1941", birthPlace: "", deathDate: "2020", gender: "f", father: 0, mother: 0 }
+            "1": { id: 1, firstName: "Alexander", lastName: "Presler", birthDate: "1982", birthPlace: "München", deathDate: "", gender: "m", father: 2, mother: 3 },
+            "2": { id: 2, firstName: "Vladimir", lastName: "Presler", birthDate: "01.08.1959", birthPlace: "", deathDate: "", gender: "m", father: 4, mother: 5 },
+            "3": { id: 3, firstName: "Swetlana", lastName: "Presler", birthDate: "01.06.1961", birthPlace: "", deathDate: "", gender: "f", father: 6, mother: 7 },
+            "5": { id: 5, firstName: "Raisa", lastName: "Gredneva", birthDate: "1941", birthPlace: "", deathDate: "12.10.2020", gender: "f", father: 0, mother: 0 }
         };
 
-        let familyTree = JSON.parse(localStorage.getItem('ultimateTreeProValid')) || defaultData;
+        // Neues Storage-Key um alte fehlerhafte Cache-Daten komplett zu überschreiben
+        let familyTree = JSON.parse(localStorage.getItem('perfectFinalTree')) || defaultData;
 
         function saveAndRefresh() {
-            localStorage.setItem('ultimateTreeProValid', JSON.stringify(familyTree));
+            localStorage.setItem('perfectFinalTree', JSON.stringify(familyTree));
             renderTree();
         }
 
@@ -180,25 +195,3 @@
 
         function generateCard(id) {
             const p = familyTree[id];
-            if (!p) return `<div class="person-card" style="border:2px dashed #ccc; background:#eee; color:#aaa; font-size:0.65rem;">Unbekannt</div>`;
-            
-            const isDeceased = p.deathDate && p.deathDate.trim() !== "";
-            return `
-                <div class="person-card ${p.gender === 'm' ? 'male' : 'female'} ${isDeceased ? 'deceased' : ''}" onclick="handleCardClick(${id})">
-                    <div class="name-display">${p.firstName}<br>${p.lastName}</div>
-                    <div class="info-display">
-                        <div>* ${p.birthDate || ''}</div>
-                        ${p.birthPlace ? `<div>📍 ${p.birthPlace}</div>` : ''}
-                        ${p.deathDate ? `<div>† ${p.deathDate}</div>` : ''}
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderTree() {
-            const canvas = document.getElementById('treeCanvas');
-            
-            const p1 = familyTree[1] || { father: 0, mother: 0 };
-            const fId = p1.father;
-            const mId = p1.mother;
-            
