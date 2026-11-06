@@ -21,21 +21,23 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 40px;
             margin-top: 20px;
             width: 100%;
         }
-        .generation-row {
+        
+        /* Baum-Layout für hierarchische Linien */
+        .tree-row {
             display: flex;
             justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
+            gap: 40px;
+            width: 100%;
             position: relative;
+            margin-bottom: 40px;
         }
         
         /* Karten-Design */
         .person-card {
-            width: 150px;
+            width: 140px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.08);
@@ -49,7 +51,7 @@
             z-index: 10;
         }
         .person-card.male { border-color: #3498db; }
-        .person-card.female { border-color: #f78fb3; } /* Rosa Umrandung */
+        .person-card.female { border-color: #f78fb3; } /* Rosa Rand */
         
         /* Schwarzes Trauer-Dreieck oben links */
         .person-card.deceased::before {
@@ -59,13 +61,13 @@
             left: 0;
             width: 0;
             height: 0;
-            border-top: 20px solid black;
-            border-right: 20px solid transparent;
-            border-top-left-radius: 4px;
+            border-top: 22px solid black;
+            border-right: 22px solid transparent;
+            border-top-left-radius: 5px;
         }
 
-        .name-display { font-weight: bold; font-size: 0.9rem; margin-top: 5px; }
-        .info-display { font-size: 0.75rem; color: #7f8c8d; }
+        .name-display { font-weight: bold; font-size: 0.85rem; margin-top: 5px; }
+        .info-display { font-size: 0.7rem; color: #7f8c8d; line-height: 1.2; }
         
         .action-menu {
             display: flex;
@@ -79,7 +81,7 @@
         .action-btn {
             background: #eee;
             border: none;
-            padding: 3px 6px;
+            padding: 4px 6px;
             font-size: 0.65rem;
             border-radius: 4px;
             cursor: pointer;
@@ -118,14 +120,14 @@
             
             <input type="text" id="firstName" placeholder="Vorname" required>
             <input type="text" id="lastName" placeholder="Nachname" required>
-            <input type="text" id="birthDate" placeholder="Geburtsdatum (z.B. 12.05.1980)">
+            <input type="text" id="birthDate" placeholder="Geburtsdatum (z.B. 1982)">
             <input type="text" id="birthPlace" placeholder="Geburtsort">
             
             <select id="gender">
                 <option value="m">Männlich (Blauer Rand)</option>
                 <option value="f">Weiblich (Rosa Rand)</option>
             </select>
-            <input type="text" id="deathDate" placeholder="Todestag (leer lassen falls lebend)">
+            <input type="text" id="deathDate" placeholder="Todestag (leer lassen wenn lebend)">
             
             <button type="submit" class="submit-btn full-width">Speichern</button>
             <button type="button" class="cancel-btn full-width" onclick="closeForm()">Abbrechen</button>
@@ -133,7 +135,7 @@
     </div>
 
     <script>
-        // Startperson (Du)
+        // Saubere Start-Datenbasis (Du als Ursprung)
         let defaultData = [
             {
                 id: 1,
@@ -142,17 +144,15 @@
                 birthDate: "1982",
                 birthPlace: "",
                 deathDate: "",
-                gender: "m",
-                parents: [],
-                siblings: [],
-                partners: []
+                gender: "m"
             }
         ];
 
-        let people = JSON.parse(localStorage.getItem('profiFamilyTree')) || defaultData;
+        // Neuen Key nutzen, um alte abgestürzte Datensätze im Speicher zu überschreiben
+        let people = JSON.parse(localStorage.getItem('validProfiTreeData')) || defaultData;
 
-        function saveAndRender() {
-            localStorage.setItem('profiFamilyTree', JSON.stringify(people));
+        function saveAndRefresh() {
+            localStorage.setItem('validProfiTreeData', JSON.stringify(people));
             renderTree();
         }
 
@@ -161,28 +161,22 @@
             document.getElementById('relType').value = type;
             document.getElementById('sourceId').value = sourceId;
             
-            // Automatische Geschlechtsvorwahl für Elternteile
             if(type === 'Mutter') document.getElementById('gender').value = 'f';
             if(type === 'Vater') document.getElementById('gender').value = 'm';
             
-            document.getElementById('formTitle').innerText = `${type} für ${findPerson(sourceId).firstName} hinzufügen`;
+            const p = people.find(person => person.id === parseInt(sourceId));
+            document.getElementById('formTitle').innerText = `${type} für ${p ? p.firstName : ''} hinzufügen`;
             document.getElementById('formBox').style.display = "block";
-            document.getElementById('formBox').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function closeForm() { document.getElementById('formBox').style.display = "none"; }
-        function findPerson(id) { return people.find(p => p.id === parseInt(id)); }
+        function closeForm() { 
+            document.getElementById('formBox').style.display = "none"; 
+        }
 
         function deletePerson(id) {
             if(confirm("Diese Person wirklich löschen?")) {
                 people = people.filter(p => p.id !== id);
-                // Beziehungen säubern
-                people.forEach(p => {
-                    p.parents = p.parents.filter(pid => pid !== id);
-                    p.siblings = p.siblings.filter(sid => sid !== id);
-                    p.partners = p.partners.filter(pid => pid !== id);
-                });
-                saveAndRender();
+                saveAndRefresh();
             }
         }
 
@@ -190,14 +184,14 @@
             const canvas = document.getElementById('treeCanvas');
             canvas.innerHTML = "";
 
-            // Dynamische Gruppierung nach Generationsebenen zur Veranschaulichung
-            // Für eine saubere mobile Ansicht listen wir die Karten übersichtlich auf
             const row = document.createElement('div');
-            row.className = "generation-row";
+            row.className = "tree-row";
 
             people.forEach(p => {
                 const card = document.createElement('div');
                 card.className = `person-card ${p.gender === 'm' ? 'male' : 'female'}`;
+                
+                // Aktiviert das schwarze Dreieck, wenn ein Todesdatum existiert
                 if(p.deathDate && p.deathDate.trim() !== "") {
                     card.classList.add('deceased');
                 }
@@ -212,8 +206,6 @@
                     <div class="action-menu">
                         <button class="action-btn add" onclick="openAddForm('Vater', ${p.id})">+ Papa</button>
                         <button class="action-btn add" onclick="openAddForm('Mutter', ${p.id})">+ Mama</button>
-                        <button class="action-btn add" onclick="openAddForm('Geschwister', ${p.id})">+ Geschw.</button>
-                        <button class="action-btn add" onclick="openAddForm('Partner', ${p.id})">+ Partner</button>
                         <button class="action-btn del" onclick="deletePerson(${p.id})">🗑️</button>
                     </div>
                 `;
@@ -224,22 +216,23 @@
 
         document.getElementById('personForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const type = document.getElementById('relType').value;
-            const sourceId = parseInt(document.getElementById('sourceId').value);
-            const sourcePerson = findPerson(sourceId);
             
-            const newId = Date.now();
             const newPerson = {
-                id: newId,
+                id: Date.now(),
                 firstName: document.getElementById('firstName').value,
                 lastName: document.getElementById('lastName').value,
                 birthDate: document.getElementById('birthDate').value,
                 birthPlace: document.getElementById('birthPlace').value,
                 deathDate: document.getElementById('deathDate').value,
-                gender: document.getElementById('gender').value,
-                parents: [], siblings: [], partners: []
+                gender: document.getElementById('gender').value
             };
 
-            // Logische Verknüpfung der Beziehungen
-            if(type === 'Vater' || type === 'Mutter') {
-                sourcePerson.parents.push(newId);
+            people.push(newPerson);
+            saveAndRefresh();
+            closeForm();
+        });
+
+        renderTree();
+    </script>
+</body>
+</html>
