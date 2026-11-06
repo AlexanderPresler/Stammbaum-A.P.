@@ -2,11 +2,11 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Stammbaum Profi</title>
     <style>
         .version-stamp {
-            position: absolute;
+            position: fixed;
             top: 5px;
             left: 10px;
             font-size: 0.65rem;
@@ -18,21 +18,42 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             background-color: #f3f4f6;
             margin: 0;
-            padding: 35px 10px 20px 10px;
-            padding-bottom: 300px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden; /* Verhindert das Standard-Scrollen für das Schiebe-System */
         }
-        h1 { font-size: 1.2rem; color: #2c3e50; margin-bottom: 25px; }
+        h1 { 
+            position: fixed;
+            top: 15px;
+            text-align: center;
+            width: 100%;
+            font-size: 1.2rem; 
+            color: #2c3e50; 
+            z-index: 100;
+            pointer-events: none;
+        }
         
+        /* Unendlich zoom- und schiebbare Arbeitsfläche */
+        .zoom-viewport {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+            position: relative;
+        }
         .tree-grid {
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 100%;
             gap: 40px;
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            transform-origin: center center;
+            width: 800px; /* Breite Basis für weites Rauszoomen */
         }
+        
         .layer {
             display: flex;
             justify-content: center;
@@ -41,17 +62,9 @@
             width: 100%;
             position: relative;
         }
-        
-        /* Die grauen Verbindungslinien zwischen den Generationen */
         .layer::after {
-            content: "";
-            position: absolute;
-            bottom: -25px;
-            left: 50%;
-            width: 2px;
-            height: 25px;
-            background: #bdc3c7;
-            z-index: 1;
+            content: ""; position: absolute; bottom: -25px; left: 50%;
+            width: 2px; height: 25px; background: #bdc3c7; z-index: 1;
         }
         .layer:last-child::after { display: none; }
 
@@ -78,27 +91,21 @@
             justify-content: center;
             gap: 2px;
             z-index: 10;
-            cursor: pointer;
         }
         .person-card.male { border-color: #3498db; }
-        .person-card.female { border-color: #f78fb3; } /* Rosa Umrandung für Frauen */
+        .person-card.female { border-color: #f78fb3; }
         
-        /* Schwarzes Trauer-Dreieck oben links */
         .person-card.deceased::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 0; height: 0;
-            border-top: 20px solid black;
-            border-right: 20px solid transparent;
-            border-top-left-radius: 4px;
-            z-index: 12;
+            content: ""; position: absolute; top: 0; left: 0; width: 0; height: 0;
+            border-top: 20px solid black; border-right: 20px solid transparent;
+            border-top-left-radius: 4px; z-index: 12;
         }
 
         .name-display { font-weight: bold; font-size: 0.75rem; color: #2c3e50; line-height: 1.2; }
         .info-display { font-size: 0.6rem; color: #7f8c8d; line-height: 1.2; }
         .rings-label { font-size: 1rem; color: #f1c40f; z-index: 15; }
 
-        /* Versteckte Eingabemaske am unteren Rand */
+        /* Eingabemaske am unteren Rand */
         .form-container {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: white; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
@@ -115,71 +122,79 @@
 </head>
 <body>
 
-    <div class="version-stamp">Coderstellung: 06.11.2026, 22:45:00 Uhr | Version: 2.0</div>
+    <div class="version-stamp">Coderstellung: 06.11.2026, 22:50:00 Uhr | Version: 3.0</div>
 
     <h1>🌳 Mein Stammbaum Profi</h1>
 
-    <div class="tree-grid" id="treeCanvas">
-        <!-- Reines, ausfallsicheres HTML-Layout ohne Speicherabstürze -->
-        <div class="layer">
-            <div class="couple-unit">
-                <div class="person-card male deceased" onclick="openEdit('p4', 'Uropa', 'Lagutochkin', '1920', '', 'm', '1995')">
-                    <div class="name-display" id="p4-name">Uropa<br>Lagutochkin</div>
-                    <div class="info-display" id="p4-info"><div>* 1920</div><div>† 1995</div></div>
+    <!-- Interaktiver Zoom- & Schiebebereich -->
+    <div class="zoom-viewport" id="viewport">
+        <div class="tree-grid" id="treeCanvas">
+            
+            <div class="layer">
+                <div class="couple-unit">
+                    <div class="person-card male deceased" data-id="p4" data-first="Uropa" data-last="Lagutochkin" data-birth="1920" data-place="" data-gender="m" data-death="1995">
+                        <div class="name-display" id="p4-name">Uropa<br>Lagutochkin</div>
+                        <div class="info-display" id="p4-info"><div>* 1920</div><div>† 1995</div></div>
+                    </div>
+                    <div class="rings-label">💍</div>
+                    <div class="person-card female deceased" data-id="p5" data-first="Raisa" data-last="Gredneva" data-birth="1941" data-place="" data-gender="f" data-death="12.10.2020">
+                        <div class="name-display" id="p5-name">Raisa<br>Gredneva</div>
+                        <div class="info-display" id="p5-info"><div>* 1941</div><div>† 12.10.2020</div></div>
+                    </div>
                 </div>
-                <div class="rings-label">💍</div>
-                <div class="person-card female deceased" onclick="openEdit('p5', 'Raisa', 'Gredneva', '1941', '', 'f', '12.10.2020')">
-                    <div class="name-display" id="p5-name">Raisa<br>Gredneva</div>
-                    <div class="info-display" id="p5-info"><div>* 1941</div><div>† 12.10.2020</div></div>
-                </div>
-            </div>
-            <div style="width: 15px;"></div>
-            <div class="couple-unit">
-                <div class="person-card male deceased" onclick="openEdit('p8', 'Großvater', 'Presler', '1930', '', 'm', '2005')">
-                    <div class="name-display" id="p8-name">Großvater<br>Presler</div>
-                    <div class="info-display" id="p8-info"><div>* 1930</div><div>† 2005</div></div>
-                </div>
-                <div class="rings-label">💍</div>
-                <div class="person-card female" onclick="openEdit('p9', 'Großmutter', 'Presler', '1935', '', 'f', '')">
-                    <div class="name-display" id="p9-name">Großmutter<br>Presler</div>
-                    <div class="info-display" id="p9-info"><div>* 1935</div><div>Lebend</div></div>
-                </div>
-            </div>
-        </div>
-        <div class="layer">
-            <div class="couple-unit">
-                <div class="person-card male" onclick="openEdit('p2', 'Vladimir', 'Lagutochkin', '1959', '', 'm', '')">
-                    <div class="name-display" id="p2-name">Vladimir<br>Lagutochkin</div>
-                    <div class="info-display" id="p2-info"><div>* 1959</div><div>Lebend</div></div>
-                </div>
-                <div class="rings-label">💍</div>
-                <div class="person-card female" onclick="openEdit('p3', 'Swetlana', 'Presler', '1961', '', 'f', '')">
-                    <div class="name-display" id="p3-name">Swetlana<br>Presler</div>
-                    <div class="info-display" id="p3-info"><div>* 1961</div><div>Lebend</div></div>
+                <div style="width: 15px;"></div>
+                <div class="couple-unit">
+                    <div class="person-card male deceased" data-id="p8" data-first="Großvater" data-last="Presler" data-birth="1930" data-place="" data-gender="m" data-death="2005">
+                        <div class="name-display" id="p8-name">Großvater<br>Presler</div>
+                        <div class="info-display" id="p8-info"><div>* 1930</div><div>† 2005</div></div>
+                    </div>
+                    <div class="rings-label">💍</div>
+                    <div class="person-card female" data-id="p9" data-first="Großmutter" data-last="Presler" data-birth="1935" data-place="" data-gender="f" data-death="">
+                        <div class="name-display" id="p9-name">Großmutter<br>Presler</div>
+                        <div class="info-display" id="p9-info"><div>* 1935</div><div>Lebend</div></div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="layer">
-            <div class="couple-unit">
-                <div class="person-card male" onclick="openEdit('p1', 'Alexander', 'Presler', '1982', 'München', 'm', '')">
-                    <div class="name-display" id="p1-name">Alexander<br>Presler</div>
-                    <div class="info-display" id="p1-info"><div>* 1982</div><div>📍 München</div><div>Lebend</div></div>
-                </div>
-                <div class="rings-label">💍</div>
-                <div class="person-card female" onclick="openEdit('p6', 'Elina', 'Presler', '1986', '', 'f', '')">
-                    <div class="name-display" id="p6-name">Elina<br>Presler</div>
-                    <div class="info-display" id="p6-info"><div>* 1986</div><div>Lebend</div></div>
+            
+            <div class="layer">
+                <div class="couple-unit">
+                    <div class="person-card male" data-id="p2" data-first="Vladimir" data-last="Lagutochkin" data-birth="1959" data-place="" data-gender="m" data-death="">
+                        <div class="name-display" id="p2-name">Vladimir<br>Lagutochkin</div>
+                        <div class="info-display" id="p2-info"><div>* 1959</div><div>Lebend</div></div>
+                    </div>
+                    <div class="rings-label">💍</div>
+                    <div class="person-card female" data-id="p3" data-first="Swetlana" data-last="Presler" data-birth="1961" data-place="" data-gender="f" data-death="">
+                        <div class="name-display" id="p3-name">Swetlana<br>Presler</div>
+                        <div class="info-display" id="p3-info"><div>* 1961</div><div>Lebend</div></div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="layer">
-            <div class="person-card female" onclick="openEdit('p7', 'Emma', 'Presler', '2018', '', 'f', '')">
-                <div class="name-display" id="p7-name">Emma<br>Presler</div>
-                <div class="info-display" id="p7-info"><div>* 2018</div><div>Lebend</div></div>
+            
+            <div class="layer">
+                <div class="couple-unit">
+                    <div class="person-card male" data-id="p1" data-first="Alexander" data-last="Presler" data-birth="1982" data-place="München" data-gender="m" data-death="">
+                        <div class="name-display" id="p1-name">Alexander<br>Presler</div>
+                        <div class="info-display" id="p1-info"><div>* 1982</div><div>📍 München</div><div>Lebend</div></div>
+                    </div>
+                    <div class="rings-label">💍</div>
+                    <div class="person-card female" data-id="p6" data-first="Elina" data-last="Presler" data-birth="1986" data-place="" data-gender="f" data-death="">
+                        <div class="name-display" id="p6-name">Elina<br>Presler</div>
+                        <div class="info-display" id="p6-info"><div>* 1986</div><div>Lebend</div></div>
+                    </div>
+                </div>
             </div>
+            
+            <div class="layer">
+                <div class="person-card female" data-id="p7" data-first="Emma" data-last="Presler" data-birth="2018" data-place="" data-gender="f" data-death="">
+                    <div class="name-display" id="p7-name">Emma<br>Presler</div>
+                    <div class="info-display" id="p7-info"><div>* 2018</div><div>Lebend</div></div>
+                </div>
+            </div>
+            
         </div>
     </div>
 
+    <!-- Das Formular -->
     <div class="form-container" id="formBox">
         <div class="form-title" id="formTitle">Person bearbeiten</div>
         <form id="personForm">
@@ -196,25 +211,3 @@
             <button type="submit" class="submit-btn full-width">Speichern</button>
             <button type="button" class="cancel-btn full-width" onclick="closeForm()">Abbrechen</button>
         </form>
-    </div>
-
-    <script>
-        function openEdit(id, first, last, birth, place, gender, death) {
-            document.getElementById('personForm').reset();
-            document.getElementById('activeId').value = id;
-            document.getElementById('firstName').value = first;
-            document.getElementById('lastName').value = last;
-            document.getElementById('birthDate').value = birth;
-            document.getElementById('birthPlace').value = place;
-            document.getElementById('gender').value = gender;
-            document.getElementById('deathDate').value = death;
-            
-            document.getElementById('formTitle').innerText = "✏️ " + first + " bearbeiten";
-            document.getElementById('formBox').style.display = "block";
-        }
-
-        function closeForm() { document.getElementById('formBox').style.display = "none"; }
-
-        document.getElementById('personForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            var id = document.getElementById('activeId').value;
