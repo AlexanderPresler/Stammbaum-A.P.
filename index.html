@@ -22,15 +22,40 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 40px; /* Mehr Platz für Linien */
             margin-top: 30px;
+            position: relative;
+        }
+        .generation-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            position: relative;
         }
         .generation {
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 30px;
             width: 100%;
             flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
+        }
+        /* Verbindungslinie zwischen Paaren in einer Generation */
+        .generation::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background-color: #bdc3c7;
+            z-index: 1;
+            display: none; /* Wird per JS aktiviert, wenn > 1 Person */
+        }
+        .generation.has-multiple::after {
+            display: block;
         }
         .person-card {
             background: white;
@@ -38,7 +63,7 @@
             padding: 12px 15px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            min-width: 150px;
+            min-width: 140px;
             text-align: center;
             position: relative;
             cursor: pointer;
@@ -49,7 +74,7 @@
         .name {
             font-weight: bold;
             font-size: 1rem;
-            padding-right: 20px;
+            padding-right: 15px;
         }
         .dates {
             font-size: 0.8rem;
@@ -58,22 +83,24 @@
         }
         .delete-btn {
             position: absolute;
-            top: 5px;
-            right: 5px;
+            top: 4px;
+            right: 4px;
             background: none;
             border: none;
             color: #e74c3c;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             cursor: pointer;
-            padding: 2px 5px;
+            padding: 2px;
         }
         .label {
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            color: #bdc3c7;
-            margin-bottom: 2px;
-            margin-top: 10px;
+            font-weight: bold;
+            color: #95a5a6;
+            margin-bottom: 8px;
+            text-align: center;
         }
+        /* Formular am unteren Rand */
         .form-container {
             position: fixed;
             bottom: 0;
@@ -122,6 +149,12 @@
             border: none;
             display: none;
         }
+        .empty-message {
+            color: #95a5a6;
+            font-style: italic;
+            font-size: 0.9rem;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -129,31 +162,41 @@
     <h1>🌳 Mein Stammbaum</h1>
 
     <div class="tree-container" id="tree">
-        <div class="label">Großeltern</div>
-        <div class="generation" id="gen-grandparents"></div>
+        <!-- Großeltern -->
+        <div class="generation-wrapper">
+            <div class="label">Großeltern</div>
+            <div class="generation" id="gen-grandparents"></div>
+        </div>
 
-        <div class="label">Eltern</div>
-        <div class="generation" id="gen-parents"></div>
+        <!-- Eltern -->
+        <div class="generation-wrapper">
+            <div class="label">Eltern</div>
+            <div class="generation" id="gen-parents"></div>
+        </div>
 
-        <div class="label">Kinder</div>
-        <div class="generation" id="gen-children"></div>
+        <!-- Kinder -->
+        <div class="generation-wrapper">
+            <div class="label">Kinder / Ich</div>
+            <div class="generation" id="gen-children"></div>
+        </div>
     </div>
 
+    <!-- Eingabe-Formular -->
     <div class="form-container">
         <div class="form-title" id="formTitle">➕ Neue Person hinzufügen</div>
         <form id="personForm">
             <input type="hidden" id="editIndex" value="-1">
             <input type="text" id="name" placeholder="Name" required>
             <input type="number" id="birth" placeholder="Geburtsjahr">
-            <input type="number" id="death" placeholder="Todesjahr">
+            <input type="number" id="death" placeholder="Todesjahr (falls tot)">
             <select id="gnd">
-                <option value="m">Männlich</option>
-                <option value="f">Weiblich</option>
+                <option value="m">Männlich (Blau)</option>
+                <option value="f">Weiblich (Rot)</option>
             </select>
             <select id="gen">
                 <option value="grandparents">Großeltern</option>
                 <option value="parents">Eltern</option>
-                <option value="children">Kinder</option>
+                <option value="children">Kinder / Ich</option>
             </select>
             <button type="submit" class="submit-btn" id="submitBtn">Hinzufügen</button>
             <button type="button" class="cancel-btn" id="cancelBtn" onclick="resetForm()">Abbrechen</button>
@@ -161,46 +204,61 @@
     </div>
 
     <script>
-        let defaultData = [
-            { name: "Opa Müller", gnd: "m", birth: "1940", death: "2015", gen: "grandparents" },
-            { name: "Oma Müller", gnd: "f", birth: "1943", death: "", gen: "grandparents" },
-            { name: "Papa Müller", gnd: "m", birth: "1968", death: "", gen: "parents" },
-            { name: "Mama Müller", gnd: "f", birth: "1970", death: "", gen: "parents" },
-            { name: "Ich", gnd: "m", birth: "1998", death: "", gen: "children" }
-        ];
+        // Einmaliges Aufräumen: Wenn noch "Opa Müller" im Speicher ist, löschen wir ihn
+        let savedTree = localStorage.getItem('myFamilyTree');
+        if (savedTree && savedTree.includes("Opa Müller")) {
+            localStorage.removeItem('myFamilyTree');
+        }
 
-        let familyData = JSON.parse(localStorage.getItem('myFamilyTree')) || defaultData;
+        // Stammbaum startet jetzt komplett leer []
+        let familyData = JSON.parse(localStorage.getItem('myFamilyTree')) || [];
 
         function renderTree() {
-            document.getElementById('gen-grandparents').innerHTML = '';
-            document.getElementById('gen-parents').innerHTML = '';
-            document.getElementById('gen-children').innerHTML = '';
+            const gens = ['grandparents', 'parents', 'children'];
+            
+            gens.forEach(gen => {
+                const container = document.getElementById(`gen-${gen}`);
+                container.innerHTML = '';
+                
+                // Filtere Personen für diese Generation
+                const peopleInGen = familyData.filter((p, originalIndex) => {
+                    p.origIndex = originalIndex; // Merke den echten Platz im Array fürs Bearbeiten/Löschen
+                    return p.gen === gen;
+                });
 
-            familyData.forEach((person, index) => {
-                const container = document.getElementById(`gen-${person.gen}`);
-                if (container) {
-                    const card = document.createElement('div');
-                    card.className = `person-card ${person.gnd === 'f' ? 'female' : ''}`;
-                    
-                    // Klick auf die Karte startet das Editieren (außer man klickt den Lösch-Button)
-                    card.onclick = (e) => {
-                        if(!e.target.classList.contains('delete-btn')) editPerson(index);
-                    };
-                    
-                    const deathInfo = person.death ? `† ${person.death}` : '';
-                    const dateText = person.birth ? `* ${person.birth} ${deathInfo}` : '';
+                if (peopleInGen.length === 0) {
+                    container.innerHTML = '<div class="empty-message">Noch niemand eingetragen</div>';
+                    container.classList.remove('has-multiple');
+                } else {
+                    // Wenn mehr als 1 Person in der Generation ist, aktivieren wir die Querverbindungslinie
+                    if (peopleInGen.length > 1) {
+                        container.classList.add('has-multiple');
+                    } else {
+                        container.classList.remove('has-multiple');
+                    }
 
-                    card.innerHTML = `
-                        <button class="delete-btn" onclick="deletePerson(${index})">🗑️</button>
-                        <div class="name">${person.name}</div>
-                        <div class="dates">${dateText}</div>
-                    `;
-                    container.appendChild(card);
+                    peopleInGen.forEach(person => {
+                        const card = document.createElement('div');
+                        card.className = `person-card ${person.gnd === 'f' ? 'female' : ''}`;
+                        
+                        card.onclick = (e) => {
+                            if(!e.target.classList.contains('delete-btn')) editPerson(person.origIndex);
+                        };
+                        
+                        const deathInfo = person.death ? `† ${person.death}` : '';
+                        const dateText = person.birth ? `* ${person.birth} ${deathInfo}` : '';
+
+                        card.innerHTML = `
+                            <button class="delete-btn" onclick="event.stopPropagation(); deletePerson(${person.origIndex})">🗑️</button>
+                            <div class="name">${person.name}</div>
+                            <div class="dates">${dateText}</div>
+                        `;
+                        container.appendChild(card);
+                    });
                 }
             });
         }
 
-        // Person in die Maske laden
         function editPerson(index) {
             const person = familyData[index];
             document.getElementById('editIndex').value = index;
@@ -213,12 +271,9 @@
             document.getElementById('formTitle').innerText = "✏️ Person bearbeiten";
             document.getElementById('submitBtn').innerText = "Änderungen speichern";
             document.getElementById('cancelBtn').style.display = "block";
-            
-            // Scrollt automatisch zum Formular
             document.getElementById('personForm').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Person löschen
         function deletePerson(index) {
             if(confirm("Möchtest du diese Person wirklich löschen?")) {
                 familyData.splice(index, 1);
@@ -227,45 +282,4 @@
             }
         }
 
-        // Formular zurücksetzen
         function resetForm() {
-            document.getElementById('personForm').reset();
-            document.getElementById('editIndex').value = "-1";
-            document.getElementById('formTitle').innerText = "➕ Neue Person hinzufügen";
-            document.getElementById('submitBtn').innerText = "Hinzufügen";
-            document.getElementById('cancelBtn').style.display = "none";
-        }
-
-        function saveAndRefresh() {
-            localStorage.setItem('myFamilyTree', JSON.stringify(familyData));
-            renderTree();
-        }
-
-        document.getElementById('personForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const index = parseInt(document.getElementById('editIndex').value);
-
-            const personDetails = {
-                name: document.getElementById('name').value,
-                birth: document.getElementById('birth').value,
-                death: document.getElementById('death').value,
-                gnd: document.getElementById('gnd').value,
-                gen: document.getElementById('gen').value
-            };
-
-            if (index === -1) {
-                // Neu hinzufügen
-                familyData.push(personDetails);
-            } else {
-                // Bestehende bearbeiten
-                familyData[index] = personDetails;
-            }
-
-            saveAndRefresh();
-            resetForm();
-        });
-
-        renderTree();
-    </script>
-</body>
-</html>
