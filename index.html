@@ -11,7 +11,7 @@
             margin: 0;
             padding: 20px;
             color: #333;
-            padding-bottom: 260px;
+            padding-bottom: 280px;
         }
         h1 {
             text-align: center;
@@ -38,8 +38,10 @@
             padding: 12px 15px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            min-width: 140px;
+            min-width: 150px;
             text-align: center;
+            position: relative;
+            cursor: pointer;
         }
         .person-card.female {
             border-left-color: #e74c3c;
@@ -47,11 +49,23 @@
         .name {
             font-weight: bold;
             font-size: 1rem;
+            padding-right: 20px;
         }
         .dates {
             font-size: 0.8rem;
             color: #7f8c8d;
             margin-top: 4px;
+        }
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: none;
+            border: none;
+            color: #e74c3c;
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding: 2px 5px;
         }
         .label {
             font-size: 0.7rem;
@@ -70,7 +84,7 @@
             box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
             border-top-left-radius: 15px;
             border-top-right-radius: 15px;
-            max-height: 240px;
+            max-height: 260px;
             overflow-y: auto;
             z-index: 1000;
         }
@@ -94,12 +108,19 @@
         input[type="text"] {
             grid-column: span 2;
         }
-        button {
+        button.submit-btn {
             grid-column: span 2;
             background-color: #2ecc71;
             color: white;
             border: none;
             font-weight: bold;
+        }
+        button.cancel-btn {
+            grid-column: span 2;
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            display: none;
         }
     </style>
 </head>
@@ -119,8 +140,9 @@
     </div>
 
     <div class="form-container">
-        <div class="form-title">➕ Neue Person hinzufügen</div>
+        <div class="form-title" id="formTitle">➕ Neue Person hinzufügen</div>
         <form id="personForm">
+            <input type="hidden" id="editIndex" value="-1">
             <input type="text" id="name" placeholder="Name" required>
             <input type="number" id="birth" placeholder="Geburtsjahr">
             <input type="number" id="death" placeholder="Todesjahr">
@@ -133,7 +155,8 @@
                 <option value="parents">Eltern</option>
                 <option value="children">Kinder</option>
             </select>
-            <button type="submit">Hinzufügen</button>
+            <button type="submit" class="submit-btn" id="submitBtn">Hinzufügen</button>
+            <button type="button" class="cancel-btn" id="cancelBtn" onclick="resetForm()">Abbrechen</button>
         </form>
     </div>
 
@@ -153,16 +176,22 @@
             document.getElementById('gen-parents').innerHTML = '';
             document.getElementById('gen-children').innerHTML = '';
 
-            familyData.forEach(person => {
+            familyData.forEach((person, index) => {
                 const container = document.getElementById(`gen-${person.gen}`);
                 if (container) {
                     const card = document.createElement('div');
                     card.className = `person-card ${person.gnd === 'f' ? 'female' : ''}`;
                     
+                    // Klick auf die Karte startet das Editieren (außer man klickt den Lösch-Button)
+                    card.onclick = (e) => {
+                        if(!e.target.classList.contains('delete-btn')) editPerson(index);
+                    };
+                    
                     const deathInfo = person.death ? `† ${person.death}` : '';
                     const dateText = person.birth ? `* ${person.birth} ${deathInfo}` : '';
 
                     card.innerHTML = `
+                        <button class="delete-btn" onclick="deletePerson(${index})">🗑️</button>
                         <div class="name">${person.name}</div>
                         <div class="dates">${dateText}</div>
                     `;
@@ -171,10 +200,52 @@
             });
         }
 
+        // Person in die Maske laden
+        function editPerson(index) {
+            const person = familyData[index];
+            document.getElementById('editIndex').value = index;
+            document.getElementById('name').value = person.name;
+            document.getElementById('birth').value = person.birth;
+            document.getElementById('death').value = person.death;
+            document.getElementById('gnd').value = person.gnd;
+            document.getElementById('gen').value = person.gen;
+
+            document.getElementById('formTitle').innerText = "✏️ Person bearbeiten";
+            document.getElementById('submitBtn').innerText = "Änderungen speichern";
+            document.getElementById('cancelBtn').style.display = "block";
+            
+            // Scrollt automatisch zum Formular
+            document.getElementById('personForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Person löschen
+        function deletePerson(index) {
+            if(confirm("Möchtest du diese Person wirklich löschen?")) {
+                familyData.splice(index, 1);
+                saveAndRefresh();
+                resetForm();
+            }
+        }
+
+        // Formular zurücksetzen
+        function resetForm() {
+            document.getElementById('personForm').reset();
+            document.getElementById('editIndex').value = "-1";
+            document.getElementById('formTitle').innerText = "➕ Neue Person hinzufügen";
+            document.getElementById('submitBtn').innerText = "Hinzufügen";
+            document.getElementById('cancelBtn').style.display = "none";
+        }
+
+        function saveAndRefresh() {
+            localStorage.setItem('myFamilyTree', JSON.stringify(familyData));
+            renderTree();
+        }
+
         document.getElementById('personForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            const index = parseInt(document.getElementById('editIndex').value);
 
-            const newPerson = {
+            const personDetails = {
                 name: document.getElementById('name').value,
                 birth: document.getElementById('birth').value,
                 death: document.getElementById('death').value,
@@ -182,10 +253,16 @@
                 gen: document.getElementById('gen').value
             };
 
-            familyData.push(newPerson);
-            localStorage.setItem('myFamilyTree', JSON.stringify(familyData));
-            renderTree();
-            document.getElementById('personForm').reset();
+            if (index === -1) {
+                // Neu hinzufügen
+                familyData.push(personDetails);
+            } else {
+                // Bestehende bearbeiten
+                familyData[index] = personDetails;
+            }
+
+            saveAndRefresh();
+            resetForm();
         });
 
         renderTree();
