@@ -6,45 +6,62 @@
     <title>Stammbaum Profi</title>
     <style>
         .version-stamp {
-            position: absolute;
+            position: fixed;
             top: 5px;
             left: 10px;
             font-size: 0.65rem;
             color: #95a5a6;
             font-family: monospace;
-            z-index: 2000;
+            z-index: 3000;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             background-color: #f3f4f6;
             margin: 0;
-            padding: 40px 0 300px 0;
-            display: grid;
-            justify-items: center; /* Zwingt alles zur Mitte */
+            padding: 0;
             width: 100vw;
-            box-sizing: border-box;
+            height: 100vh;
+            overflow: hidden; /* Verhindert Wackeln der Seite beim Schieben */
         }
         h1 { 
+            position: fixed;
+            top: 15px;
+            text-align: center;
+            width: 100%;
             font-size: 1.2rem; 
             color: #2c3e50; 
-            margin-bottom: 25px;
-            text-align: center;
+            z-index: 100;
+            pointer-events: none;
         }
         
-        /* Absolut zentrierter Stammbaum */
+        /* Die unendliche Zoom- und Schiebe-Fläche */
+        .zoom-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Das Stammbaum-Netzwerk */
         .tree-grid {
-            display: grid;
-            justify-items: center;
-            gap: 40px;
-            width: 100%;
-            max-width: 360px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 45px;
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            /* Startet extrem weit herausgezoomt auf 0.5, damit alles passt */
+            transform: translate(-50%, -50%) scale(0.5);
+            transform-origin: center center;
+            width: 900px;
         }
         
         .layer {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
             width: 100%;
             position: relative;
         }
@@ -57,48 +74,48 @@
         .couple-unit {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             position: relative;
         }
         
         /* Personenkarten */
         .person-card {
-            width: 110px;
+            width: 115px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.06);
             text-align: center;
-            padding: 10px 4px;
-            min-height: 90px;
+            padding: 12px 4px;
+            min-height: 95px;
             border: 3px solid #bdc3c7;
             position: relative;
             display: flex;
             flex-direction: column;
             justify-content: center;
             gap: 2px;
-            z-index: 10;
+            z-index: 2000; /* Ganz nach oben geholt für Klicksicherheit */
             cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
         }
         .person-card.male { border-color: #3498db; }
-        .person-card.female { border-color: #f78fb3; }
+        .person-card.female { border-color: #f78fb3; } /* Rosa Umrandung */
         
+        /* Schwarzes Trauer-Dreieck oben links */
         .person-card.deceased::before {
             content: ""; position: absolute; top: 0; left: 0; width: 0; height: 0;
-            border-top: 20px solid black; border-right: 20px solid transparent;
-            border-top-left-radius: 4px; z-index: 12;
+            border-top: 22px solid black; border-right: 22px solid transparent;
+            border-top-left-radius: 4px; z-index: 2010;
         }
 
         .name-display { font-weight: bold; font-size: 0.75rem; color: #2c3e50; line-height: 1.2; pointer-events: none; }
         .info-display { font-size: 0.6rem; color: #7f8c8d; line-height: 1.2; pointer-events: none; }
-        .rings-label { font-size: 1rem; color: #f1c40f; z-index: 15; }
+        .rings-label { font-size: 1.1rem; color: #f1c40f; z-index: 15; }
 
         /* Eingabemaske am unteren Rand */
         .form-container {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: white; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
             border-top-left-radius: 16px; border-top-right-radius: 16px;
-            max-height: 280px; overflow-y: auto; z-index: 1000; display: none;
+            max-height: 280px; overflow-y: auto; z-index: 4000; display: none;
             box-sizing: border-box;
         }
         .form-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 8px; color: #2c3e50; }
@@ -111,80 +128,83 @@
 </head>
 <body>
 
-    <div class="version-stamp">Coderstellung: 06.11.2026, 23:25:00 Uhr | Version: 9.0</div>
+    <div class="version-stamp">Coderstellung: 06.11.2026, 23:15:00 Uhr | Version: 10.0</div>
 
     <h1>🌳 Mein Stammbaum Profi</h1>
 
-    <div class="tree-grid" id="mainContainer">
-        
-        <!-- Schicht 1: Großeltern -->
-        <div class="layer">
-            <div class="couple-unit">
-                <div class="person-card male deceased" data-id="p4">
-                    <div class="name-display" id="p4-name">Uropa<br>Lagutochkin</div>
-                    <div class="info-display" id="p4-info"><div>* 1920</div><div>† 1995</div></div>
+    <!-- Die zoom- und verschiebbare Kartenoberfläche -->
+    <div class="zoom-container" id="zoomArea">
+        <div class="tree-grid" id="treeCanvas">
+            
+            <!-- Generation 1 -->
+            <div class="layer">
+                <div class="couple-unit">
+                    <div class="person-card male deceased" data-id="p4">
+                        <div class="name-display" id="p4-name">Uropa<br>Lagutochkin</div>
+                        <div class="info-display" id="p4-info"><div>* 1920</div><div>† 1995</div></div>
+                    </div>
+                    <div class="rings-label">💍</div>
+                    <div class="person-card female deceased" data-id="p5">
+                        <div class="name-display" id="p5-name">Raisa<br>Gredneva</div>
+                        <div class="info-display" id="p5-info"><div>* 1941</div><div>† 12.10.2020</div></div>
+                    </div>
                 </div>
-                <div class="rings-label">💍</div>
-                <div class="person-card female deceased" data-id="p5">
-                    <div class="name-display" id="p5-name">Raisa<br>Gredneva</div>
-                    <div class="info-display" id="p5-info"><div>* 1941</div><div>† 12.10.2020</div></div>
+                <div style="width: 25px;"></div>
+                <div class="couple-unit">
+                    <div class="person-card male deceased" data-id="p8">
+                        <div class="name-display" id="p8-name">Großvater<br>Presler</div>
+                        <div class="info-display" id="p8-info"><div>* 1930</div><div>† 2005</div></div>
+                    </div>
+                    <div class="rings-label">💍</div>
+                    <div class="person-card female" data-id="p9">
+                        <div class="name-display" id="p9-name">Großmutter<br>Presler</div>
+                        <div class="info-display" id="p9-info"><div>* 1935</div><div>Lebend</div></div>
+                    </div>
                 </div>
             </div>
-            <div style="width: 5px;"></div>
-            <div class="couple-unit">
-                <div class="person-card male deceased" data-id="p8">
-                    <div class="name-display" id="p8-name">Großvater<br>Presler</div>
-                    <div class="info-display" id="p8-info"><div>* 1930</div><div>† 2005</div></div>
-                </div>
-                <div class="rings-label">💍</div>
-                <div class="person-card female" data-id="p9">
-                    <div class="name-display" id="p9-name">Großmutter<br>Presler</div>
-                    <div class="info-display" id="p9-info"><div>* 1935</div><div>Lebend</div></div>
+            
+            <!-- Generation 2 -->
+            <div class="layer">
+                <div class="couple-unit">
+                    <div class="person-card male" data-id="p2">
+                        <div class="name-display" id="p2-name">Vladimir<br>Lagutochkin</div>
+                        <div class="info-display" id="p2-info"><div>* 1959</div><div>Lebend</div></div>
+                    </div>
+                    <div class="rings-label">💍</div>
+                    <div class="person-card female" data-id="p3">
+                        <div class="name-display" id="p3-name">Swetlana<br>Presler</div>
+                        <div class="info-display" id="p3-info"><div>* 1961</div><div>Lebend</div></div>
+                    </div>
                 </div>
             </div>
+            
+            <!-- Generation 3 -->
+            <div class="layer">
+                <div class="couple-unit">
+                    <div class="person-card male" data-id="p1">
+                        <div class="name-display" id="p1-name">Alexander<br>Presler</div>
+                        <div class="info-display" id="p1-info"><div>* 1982</div><div>📍 München</div><div>Lebend</div></div>
+                    </div>
+                    <div class="rings-label">💍</div>
+                    <div class="person-card female" data-id="p6">
+                        <div class="name-display" id="p6-name">Elina<br>Presler</div>
+                        <div class="info-display" id="p6-info"><div>* 1986</div><div>Lebend</div></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Generation 4 -->
+            <div class="layer">
+                <div class="person-card female" data-id="p7">
+                    <div class="name-display" id="p7-name">Emma<br>Presler</div>
+                    <div class="info-display" id="p7-info"><div>* 2018</div><div>Lebend</div></div>
+                </div>
+            </div>
+            
         </div>
-        
-        <!-- Schicht 2: Eltern -->
-        <div class="layer">
-            <div class="couple-unit">
-                <div class="person-card male" data-id="p2">
-                    <div class="name-display" id="p2-name">Vladimir<br>Lagutochkin</div>
-                    <div class="info-display" id="p2-info"><div>* 1959</div><div>Lebend</div></div>
-                </div>
-                <div class="rings-label">💍</div>
-                <div class="person-card female" data-id="p3">
-                    <div class="name-display" id="p3-name">Swetlana<br>Presler</div>
-                    <div class="info-display" id="p3-info"><div>* 1961</div><div>Lebend</div></div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Schicht 3: Ich -->
-        <div class="layer">
-            <div class="couple-unit">
-                <div class="person-card male" data-id="p1">
-                    <div class="name-display" id="p1-name">Alexander<br>Presler</div>
-                    <div class="info-display" id="p1-info"><div>* 1982</div><div>📍 München</div><div>Lebend</div></div>
-                </div>
-                <div class="rings-label">💍</div>
-                <div class="person-card female" data-id="p6">
-                    <div class="name-display" id="p6-name">Elina<br>Presler</div>
-                    <div class="info-display" id="p6-info"><div>* 1986</div><div>Lebend</div></div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Schicht 4: Kinder -->
-        <div class="layer">
-            <div class="person-card female" data-id="p7">
-                <div class="name-display" id="p7-name">Emma<br>Presler</div>
-                <div class="info-display" id="p7-info"><div>* 2018</div><div>Lebend</div></div>
-            </div>
-        </div>
-        
     </div>
 
-    <!-- Das Formular -->
+    <!-- Die Eingabemaske -->
     <div class="form-container" id="formBox">
         <div class="form-title" id="formTitle">Person bearbeiten</div>
         <form id="personForm">
@@ -208,19 +228,3 @@
             "p1": { first: "Alexander", last: "Presler", birth: "1982", place: "München", gender: "m", death: "" },
             "p2": { first: "Vladimir", last: "Lagutochkin", birth: "1959", place: "", gender: "m", death: "" },
             "p3": { first: "Swetlana", last: "Presler", birth: "1961", place: "", gender: "f", death: "" },
-            "p4": { first: "Uropa", last: "Lagutochkin", birth: "1920", place: "", gender: "m", death: "1995" },
-            "p5": { first: "Raisa", last: "Gredneva", birth: "1941", place: "", gender: "f", death: "12.10.2020" },
-            "p6": { first: "Elina", last: "Presler", birth: "1986", place: "", gender: "f", death: "" },
-            "p7": { first: "Emma", last: "Presler", birth: "2018", place: "", gender: "f", death: "" },
-            "p8": { first: "Großvater", last: "Presler", birth: "1930", place: "", gender: "m", death: "2005" },
-            "p9": { first: "Großmutter", last: "Presler", birth: "1935", place: "", gender: "f", death: "" }
-        };
-
-        // Modernes, unblockierbares Klicksystem direkt über den Hauptcontainer gesteuert
-        document.getElementById('mainContainer').addEventListener('click', function(e) {
-            var card = e.target.closest('.person-card');
-            if (!card) return;
-            
-            var id = card.getAttribute('data-id');
-            var p = dataset[id];
-            if(!p) return;
