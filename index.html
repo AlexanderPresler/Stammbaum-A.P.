@@ -39,7 +39,7 @@
             align-items: center;
             gap: 40px;
             width: 100%;
-            max-width: 360px; /* Perfekt abgestimmt auf Smartphone-Breite */
+            max-width: 360px;
             margin: 0 auto;
         }
         
@@ -64,7 +64,7 @@
             position: relative;
         }
         
-        /* Personenkarten mit direktem Klick-Feedback */
+        /* Personenkarten */
         .person-card {
             width: 110px;
             background: white;
@@ -117,7 +117,7 @@
 </head>
 <body>
 
-    <div class="version-stamp">Coderstellung: 06.11.2026, 23:10:00 Uhr | Version: 7.0</div>
+    <div class="version-stamp">Coderstellung: 06.11.2026, 23:15:00 Uhr | Version: 8.0</div>
 
     <h1>🌳 Mein Stammbaum Profi</h1>
 
@@ -211,15 +211,18 @@
     </div>
 
     <script>
-        // Lokales Datengedächtnis direkt im HTML initialisieren
+        // Vollständig fehlerbereinigtes Datengedächtnis
         var dataset = {
             "p1": { first: "Alexander", last: "Presler", birth: "1982", place: "München", gender: "m", death: "" },
             "p2": { first: "Vladimir", last: "Lagutochkin", birth: "1959", place: "", gender: "m", death: "" },
             "p3": { first: "Swetlana", last: "Presler", birth: "1961", place: "", gender: "f", death: "" },
             "p4": { first: "Uropa", last: "Lagutochkin", birth: "1920", place: "", gender: "m", death: "1995" },
             "p5": { first: "Raisa", last: "Gredneva", birth: "1941", place: "", gender: "f", death: "12.10.2020" },
-            "p6": { first: "Elina", lastName: "Presler", birth: "1986", place: "", gender: "f", death: "" },
+            "p6": { first: "Elina", last: "Presler", birth: "1986", place: "", gender: "f", death: "" },
             "p7": { first: "Emma", last: "Presler", birth: "2018", place: "", gender: "f", death: "" },
             "p8": { first: "Großvater", last: "Presler", birth: "1930", place: "", gender: "m", death: "2005" },
             "p9": { first: "Großmutter", last: "Presler", birth: "1935", place: "", gender: "f", death: "" }
         };
+
+        function openForm(id) {
+            var p = dataset[id];
