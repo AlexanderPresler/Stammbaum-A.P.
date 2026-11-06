@@ -3,201 +3,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stammbaum App</title>
+    <title>Mein Stammbaum Profi</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             background-color: #f3f4f6;
             margin: 0;
             padding: 20px;
-            padding-bottom: 260px;
+            padding-bottom: 300px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        h1 { font-size: 1.3rem; color: #2c3e50; margin-bottom: 20px; }
+        h1 { font-size: 1.3rem; color: #2c3e50; }
         
-        /* Das Stammbaum-Diagramm-Netzwerk */
-        .tree {
+        .tree-container {
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 40px;
+            margin-top: 20px;
+            width: 100%;
         }
-        .tree ul {
-            padding-top: 20px; position: relative;
-            transition: all 0.5s;
-            display: flex; justify-content: center;
-            list-style-type: none;
-            padding-left: 0; margin: 0;
+        .generation-row {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            position: relative;
         }
-        .tree li {
-            text-align: center; list-style-type: none;
-            position: relative; padding: 20px 5px 0 5px;
-            transition: all 0.5s;
-            display: flex; flex-direction: column; align-items: center;
-        }
-
-        /* Vertikale Verbindungslinien von oben nach unten */
-        .tree li::before, .tree li::after {
-            content: ''; position: absolute; top: 0; right: 50%;
-            border-top: 2px solid #bdc3c7;
-            width: 50%; height: 20px;
-        }
-        .tree li::after { right: auto; left: 50%; border-left: 2px solid #bdc3c7; }
         
-        /* Entfernt äußere Linien bei einzelnen Elementen */
-        .tree li:only-child::after, .tree li:only-child::before { display: none; }
-        .tree li:only-child { padding-top: 0; }
-        .tree li:first-child::before, .tree li:last-child::after { border: 0 none; }
-        .tree li:last-child::before { border-right: 2px solid #bdc3c7; border-radius: 0 5px 0 0; }
-        .tree li:first-child::after { border-radius: 5px 0 0 0; }
-        
-        /* Vertikale Linie zum Kind hinab */
-        .tree ul ul::before {
-            content: ''; position: absolute; top: 0; left: 50%;
-            border-left: 2px solid #bdc3c7; width: 0; height: 20px;
-        }
-
         /* Karten-Design */
-        .node {
-            width: 95px; background: white; border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.06); text-align: center;
-            padding: 10px 5px; min-height: 95px; border-top: 4px solid #bdc3c7;
-            position: relative; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 10;
-            cursor: pointer; transition: transform 0.2s;
+        .person-card {
+            width: 150px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            padding: 12px;
+            text-align: center;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border: 3px solid #bdc3c7;
+            z-index: 10;
         }
-        .node:active { transform: scale(0.95); }
-        .node.male { border-top-color: #3498db; }
-        .node.female { border-top-color: #e74c3c; }
+        .person-card.male { border-color: #3498db; }
+        .person-card.female { border-color: #f78fb3; } /* Rosa Umrandung */
         
-        /* Die gestrichelten Plus-Karten aus deinem Wunschbild */
-        .node.placeholder {
-            border: 2px dashed #bdc3c7; background: #eaeded;
-            color: #7f8c8d; font-size: 0.7rem; font-weight: bold; border-top: 2px dashed #bdc3c7;
-        }
-        .node.placeholder .plus {
-            font-size: 1.1rem; margin-bottom: 4px; background: #bdc3c7;
-            color: white; width: 20px; height: 20px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
+        /* Schwarzes Trauer-Dreieck oben links */
+        .person-card.deceased::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-top: 20px solid black;
+            border-right: 20px solid transparent;
+            border-top-left-radius: 4px;
         }
 
-        .avatar { width: 35px; height: 35px; border-radius: 50%; background: #eee; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-        .name { font-weight: bold; font-size: 0.75rem; word-break: break-word; line-height: 1.1; }
-        .date { font-size: 0.65rem; color: #7f8c8d; margin-top: 2px; }
+        .name-display { font-weight: bold; font-size: 0.9rem; margin-top: 5px; }
+        .info-display { font-size: 0.75rem; color: #7f8c8d; }
+        
+        .action-menu {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: center;
+            margin-top: 8px;
+            border-top: 1px solid #eee;
+            padding-top: 6px;
+        }
+        .action-btn {
+            background: #eee;
+            border: none;
+            padding: 3px 6px;
+            font-size: 0.65rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .action-btn.add { background: #2ecc71; color: white; }
+        .action-btn.del { background: #e74c3c; color: white; }
 
         /* Eingabemaske unten */
         .form-container {
             position: fixed; bottom: 0; left: 0; right: 0;
-            background: white; padding: 15px; box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            background: white; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
             border-top-left-radius: 16px; border-top-right-radius: 16px;
-            max-height: 250px; overflow-y: auto; z-index: 1000; display: none;
+            max-height: 280px; overflow-y: auto; z-index: 1000; display: none;
         }
         .form-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 8px; color: #2c3e50; }
         form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        input, button { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; }
-        input[type="text"] { grid-column: span 2; }
-        button.submit-btn { grid-column: span 2; background: #2ecc71; color: white; border: none; font-weight: bold; }
-        button.cancel-btn { grid-column: span 2; background: #95a5a6; color: white; border: none; }
+        input, select, button { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; }
+        .full-width { grid-column: span 2; }
+        button.submit-btn { background: #2ecc71; color: white; border: none; font-weight: bold; }
+        button.cancel-btn { background: #95a5a6; color: white; border: none; }
     </style>
 </head>
 <body>
 
-    <h1>🌳 Mein Stammbaum</h1>
+    <h1>🌳 Mein Stammbaum Profi</h1>
 
-    <div class="tree">
-        <ul>
-            <li>
-                <!-- Urgroßeltern / Großeltern-Ebene links -->
-                <ul>
-                    <li>
-                        <div class="node male" id="node-4" onclick="editNode(4, 'm')"><div class="avatar">👤</div><div class="name" id="name-4">Uropa P.</div><div class="date" id="date-4">1910</div></div>
-                    </li>
-                    <li>
-                        <div class="node female" id="node-5" onclick="editNode(5, 'f')"><div class="avatar">👩</div><div class="name" id="name-5">Uroma P.</div><div class="date" id="date-5">1915</div></div>
-                    </li>
-                </ul>
-                <!-- Vater -->
-                <div class="node male" id="node-2" onclick="editNode(2, 'm')" style="margin-top:20px;"><div class="avatar">👤</div><div class="name" id="name-2">Vladimir L.</div><div class="date" id="date-2">1959</div></div>
-            </li>
-            <li>
-                <!-- Urgroßeltern / Großeltern-Ebene rechts -->
-                <ul>
-                    <li>
-                        <div class="node placeholder" id="node-6" onclick="editNode(6, 'm')"><div class="plus">+</div><div>Vater<br>hinzufügen</div></div>
-                    </li>
-                    <li>
-                        <div class="node female" id="node-7" onclick="editNode(7, 'f')"><div class="avatar">👩</div><div class="name" id="name-7">Raisa G.</div><div class="date" id="date-7">1941</div></div>
-                    </li>
-                </ul>
-                <!-- Mutter -->
-                <div class="node female" id="node-3" onclick="editNode(3, 'f')" style="margin-top:20px;"><div class="avatar">👩</div><div class="name" id="name-3">Swetlana P.</div><div class="date" id="date-3">1961</div></div>
-            </li>
-        </ul>
-        
-        <!-- Das Kind (Du selbst als Stamm) -->
-        <ul>
-            <li>
-                <div class="node male" id="node-1" onclick="editNode(1, 'm')"><div class="avatar">👤</div><div class="name" id="name-1">Alexander P.</div><div class="date" id="date-1">1982</div></div>
-            </li>
-        </ul>
-    </div>
+    <div class="tree-container" id="treeCanvas"></div>
 
-    <!-- Eingabe-Formular -->
+    <!-- Eingabeformular -->
     <div class="form-container" id="formBox">
-        <div class="form-title" id="formTitle">Person bearbeiten</div>
+        <div class="form-title" id="formTitle">Verwandten hinzufügen</div>
         <form id="personForm">
-            <input type="hidden" id="activeNodeId">
-            <input type="hidden" id="activeGender">
-            <input type="text" id="inputName" placeholder="Vor- und Nachname" required>
-            <input type="number" id="inputBirth" placeholder="Geburtsjahr">
-            <input type="number" id="inputDeath" placeholder="Todesjahr (leer lassen wenn lebend)">
-            <button type="submit" class="submit-btn">Speichern</button>
-            <button type="button" class="cancel-btn" onclick="closeForm()">Abbrechen</button>
+            <input type="hidden" id="relType">
+            <input type="hidden" id="sourceId">
+            
+            <input type="text" id="firstName" placeholder="Vorname" required>
+            <input type="text" id="lastName" placeholder="Nachname" required>
+            <input type="text" id="birthDate" placeholder="Geburtsdatum (z.B. 12.05.1980)">
+            <input type="text" id="birthPlace" placeholder="Geburtsort">
+            
+            <select id="gender">
+                <option value="m">Männlich (Blauer Rand)</option>
+                <option value="f">Weiblich (Rosa Rand)</option>
+            </select>
+            <input type="text" id="deathDate" placeholder="Todestag (leer lassen falls lebend)">
+            
+            <button type="submit" class="submit-btn full-width">Speichern</button>
+            <button type="button" class="cancel-btn full-width" onclick="closeForm()">Abbrechen</button>
         </form>
     </div>
 
     <script>
-        function editNode(id, gender) {
-            document.getElementById('activeNodeId').value = id;
-            document.getElementById('activeGender').value = gender;
-            
-            const nameEl = document.getElementById('name-' + id);
-            const dateEl = document.getElementById('date-' + id);
-            
-            // Wenn es ein Platzhalter ist, leeres Formular zeigen
-            if (!nameEl) {
-                document.getElementById('inputName').value = "";
-                document.getElementById('inputBirth').value = "";
-                document.getElementById('inputDeath').value = "";
-                document.getElementById('formTitle').innerText = "➕ Neue Person hinzufügen";
-            } else {
-                document.getElementById('inputName').value = nameEl.innerText;
-                const dates = dateEl.innerText.split('–');
-                document.getElementById('inputBirth').value = dates[0] || "";
-                document.getElementById('inputDeath').value = (dates[1] && dates[1] !== 'Lebend') ? dates[1] : "";
-                document.getElementById('formTitle').innerText = "✏️ Daten ändern";
+        // Startperson (Du)
+        let defaultData = [
+            {
+                id: 1,
+                firstName: "Alexander",
+                lastName: "Presler",
+                birthDate: "1982",
+                birthPlace: "",
+                deathDate: "",
+                gender: "m",
+                parents: [],
+                siblings: [],
+                partners: []
             }
-            
-            document.getElementById('formBox').style.display = "block";
+        ];
+
+        let people = JSON.parse(localStorage.getItem('profiFamilyTree')) || defaultData;
+
+        function saveAndRender() {
+            localStorage.setItem('profiFamilyTree', JSON.stringify(people));
+            renderTree();
         }
 
-        function closeForm() {
-            document.getElementById('formBox').style.display = "none";
+        function openAddForm(type, sourceId) {
+            document.getElementById('personForm').reset();
+            document.getElementById('relType').value = type;
+            document.getElementById('sourceId').value = sourceId;
+            
+            // Automatische Geschlechtsvorwahl für Elternteile
+            if(type === 'Mutter') document.getElementById('gender').value = 'f';
+            if(type === 'Vater') document.getElementById('gender').value = 'm';
+            
+            document.getElementById('formTitle').innerText = `${type} für ${findPerson(sourceId).firstName} hinzufügen`;
+            document.getElementById('formBox').style.display = "block";
+            document.getElementById('formBox').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function closeForm() { document.getElementById('formBox').style.display = "none"; }
+        function findPerson(id) { return people.find(p => p.id === parseInt(id)); }
+
+        function deletePerson(id) {
+            if(confirm("Diese Person wirklich löschen?")) {
+                people = people.filter(p => p.id !== id);
+                // Beziehungen säubern
+                people.forEach(p => {
+                    p.parents = p.parents.filter(pid => pid !== id);
+                    p.siblings = p.siblings.filter(sid => sid !== id);
+                    p.partners = p.partners.filter(pid => pid !== id);
+                });
+                saveAndRender();
+            }
+        }
+
+        function renderTree() {
+            const canvas = document.getElementById('treeCanvas');
+            canvas.innerHTML = "";
+
+            // Dynamische Gruppierung nach Generationsebenen zur Veranschaulichung
+            // Für eine saubere mobile Ansicht listen wir die Karten übersichtlich auf
+            const row = document.createElement('div');
+            row.className = "generation-row";
+
+            people.forEach(p => {
+                const card = document.createElement('div');
+                card.className = `person-card ${p.gender === 'm' ? 'male' : 'female'}`;
+                if(p.deathDate && p.deathDate.trim() !== "") {
+                    card.classList.add('deceased');
+                }
+
+                let infoHtml = `<div>* ${p.birthDate || 'Unbekannt'}</div>`;
+                if(p.birthPlace) infoHtml += `<div>📍 ${p.birthPlace}</div>`;
+                if(p.deathDate) infoHtml += `<div>† ${p.deathDate}</div>`;
+
+                card.innerHTML = `
+                    <div class="name-display">${p.firstName} ${p.lastName}</div>
+                    <div class="info-display">${infoHtml}</div>
+                    <div class="action-menu">
+                        <button class="action-btn add" onclick="openAddForm('Vater', ${p.id})">+ Papa</button>
+                        <button class="action-btn add" onclick="openAddForm('Mutter', ${p.id})">+ Mama</button>
+                        <button class="action-btn add" onclick="openAddForm('Geschwister', ${p.id})">+ Geschw.</button>
+                        <button class="action-btn add" onclick="openAddForm('Partner', ${p.id})">+ Partner</button>
+                        <button class="action-btn del" onclick="deletePerson(${p.id})">🗑️</button>
+                    </div>
+                `;
+                row.appendChild(card);
+            });
+            canvas.appendChild(row);
         }
 
         document.getElementById('personForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const id = document.getElementById('activeNodeId').value;
-            const gender = document.getElementById('activeGender').value;
-            const name = document.getElementById('inputName').value;
-            const birth = document.getElementById('inputBirth').value;
-            const death = document.getElementById('inputDeath').value;
+            const type = document.getElementById('relType').value;
+            const sourceId = parseInt(document.getElementById('sourceId').value);
+            const sourcePerson = findPerson(sourceId);
             
-            const nodeEl = document.getElementById('node-' + id);
-            const avatar = gender === 'm' ? '👤' : '👩';
-            const dateText = birth ? `${birth}–${death || 'Lebend'}` : '';
+            const newId = Date.now();
+            const newPerson = {
+                id: newId,
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                birthDate: document.getElementById('birthDate').value,
+                birthPlace: document.getElementById('birthPlace').value,
+                deathDate: document.getElementById('deathDate').value,
+                gender: document.getElementById('gender').value,
+                parents: [], siblings: [], partners: []
+            };
 
-            // Macht aus dem Plus-Platzhalter eine echte Karte oder aktualisiert die bestehende
-            nodeEl.className = `node ${gender === 'm' ? 'male' : 'female'}`;
-            nodeEl.innerHTML = `
+            // Logische Verknüpfung der Beziehungen
+            if(type === 'Vater' || type === 'Mutter') {
+                sourcePerson.parents.push(newId);
