@@ -15,15 +15,14 @@
             flex-direction: column;
             align-items: center;
         }
-        h1 { font-size: 1.2rem; color: #2c3e50; margin-bottom: 20px; }
+        h1 { font-size: 1.2rem; color: #2c3e50; margin-bottom: 25px; }
         
-        /* Das exakte Baum-Netzwerk aus deinem Wunschbild */
+        /* Baum-Layout */
         .tree-grid {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 35px;
-            position: relative;
             width: 100%;
         }
         .layer {
@@ -33,6 +32,20 @@
             width: 100%;
             position: relative;
         }
+        
+        /* Verbindungslinien zwischen Generationen */
+        .layer::after {
+            content: "";
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            width: 2px;
+            height: 20px;
+            background: #bdc3c7;
+            z-index: 1;
+        }
+        .layer:last-child::after { display: none; }
+
         .couple-unit {
             display: flex;
             align-items: center;
@@ -40,7 +53,7 @@
             position: relative;
         }
         
-        /* Karten-Design */
+        /* Personenkarten */
         .person-card {
             width: 115px;
             background: white;
@@ -59,15 +72,15 @@
             cursor: pointer;
         }
         .person-card.male { border-color: #3498db; }
-        .person-card.female { border-color: #f78fb3; }
+        .person-card.female { border-color: #f78fb3; } /* Rosa Rand */
         
         /* Schwarzes Trauer-Dreieck oben links */
         .person-card.deceased::before {
             content: "";
             position: absolute;
             top: 0; left: 0; width: 0; height: 0;
-            border-top: 20px solid black;
-            border-right: 20px solid transparent;
+            border-top: 22px solid black;
+            border-right: 22px solid transparent;
             border-top-left-radius: 4px;
             z-index: 12;
         }
@@ -76,7 +89,7 @@
         .info-display { font-size: 0.65rem; color: #7f8c8d; line-height: 1.2; }
         .rings-label { font-size: 1.1rem; color: #f1c40f; z-index: 15; }
 
-        /* Eingabemaske unten */
+        /* Eingabemaske am unteren Rand (Standardmäßig versteckt) */
         .form-container {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: white; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
@@ -95,15 +108,13 @@
 
     <h1>🌳 Mein Stammbaum Profi</h1>
 
-    <!-- Strukturiertes Diagramm -->
     <div class="tree-grid" id="treeCanvas"></div>
 
-    <!-- Versteckte Eingabemaske -->
+    <!-- Das ausgeblendete Formular -->
     <div class="form-container" id="formBox">
         <div class="form-title" id="formTitle">Person bearbeiten</div>
         <form id="personForm">
             <input type="hidden" id="activeId">
-            <input type="hidden" id="actionType">
             
             <input type="text" id="firstName" placeholder="Vorname" required>
             <input type="text" id="lastName" placeholder="Nachname" required>
@@ -122,21 +133,24 @@
     </div>
 
     <script>
-        // Saubere, feste Datenstruktur passend zu deiner echten Familie auf dem Bild
-        let defaultData = {
-            "p5": { id: "p5", firstName: "Raisa", lastName: "Gredneva", birthDate: "1941", birthPlace: "", deathDate: "12.10.2020", gender: "f" },
-            "p2": { id: "p2", firstName: "Vladimir", lastName: "Lagutochkin", birthDate: "1959", birthPlace: "", deathDate: "", gender: "m" },
-            "p3": { id: "p3", firstName: "Swetlana", lastName: "Presler", birthDate: "1961", birthPlace: "", deathDate: "", gender: "f" },
-            "p1": { id: "p1", firstName: "Alexander", lastName: "Presler", birthDate: "1982", birthPlace: "", deathDate: "", gender: "m" },
-            "p6": { id: "p6", firstName: "Elina", lastName: "Presler", birthDate: "1986", birthPlace: "", deathDate: "", gender: "f" },
-            "p7": { id: "p7", firstName: "Emma", lastName: "Presler", birthDate: "2018", birthPlace: "", deathDate: "", gender: "f" }
+        // Sichere und vollständige Grunddaten
+        let initialData = {
+            "p1": { firstName: "Alexander", lastName: "Presler", birthDate: "1982", birthPlace: "München", deathDate: "", gender: "m" },
+            "p2": { firstName: "Vladimir", lastName: "Lagutochkin", birthDate: "1959", birthPlace: "", deathDate: "", gender: "m" },
+            "p3": { firstName: "Swetlana", lastName: "Presler", birthDate: "1961", birthPlace: "", deathDate: "", gender: "f" },
+            "p4": { firstName: "Uropa", lastName: "Lagutochkin", birthDate: "1920", birthPlace: "", deathDate: "1995", gender: "m" },
+            "p5": { firstName: "Raisa", lastName: "Gredneva", birthDate: "1941", birthPlace: "", deathDate: "12.10.2020", gender: "f" },
+            "p6": { firstName: "Elina", lastName: "Presler", birthDate: "1986", birthPlace: "", deathDate: "", gender: "f" },
+            "p7": { firstName: "Emma", lastName: "Presler", birthDate: "2018", birthPlace: "", deathDate: "", gender: "f" },
+            "p8": { firstName: "Großvater", lastName: "Presler", birthDate: "1930", birthPlace: "", deathDate: "2005", gender: "m" },
+            "p9": { firstName: "Großmutter", lastName: "Presler", birthDate: "1935", birthPlace: "", deathDate: "", gender: "f" }
         };
 
-        // Zwingt die App, alte kaputte Speicherdaten zu verwerfen
-        let familyTree = JSON.parse(localStorage.getItem('finalHierarchicalTreeFix')) || defaultData;
+        // Neues, komplett unberührtes Storage-Label gegen alte Speicherleichen
+        let familyTree = JSON.parse(localStorage.getItem('antiCrashTreePro')) || initialData;
 
         function saveAndRefresh() {
-            localStorage.setItem('finalHierarchicalTreeFix', JSON.stringify(familyTree));
+            localStorage.setItem('antiCrashTreePro', JSON.stringify(familyTree));
             renderTree();
         }
 
@@ -145,26 +159,23 @@
         function handleCardClick(id) {
             const p = familyTree[id];
             if(!p) return;
+            
             document.getElementById('personForm').reset();
             document.getElementById('activeId').value = id;
-            document.getElementById('actionType').value = 'edit';
             
-            document.getElementById('firstName').value = p.firstName;
-            document.getElementById('lastName').value = p.lastName;
+            document.getElementById('firstName').value = p.firstName || "";
+            document.getElementById('lastName').value = p.lastName || "";
             document.getElementById('birthDate').value = p.birthDate || "";
             document.getElementById('birthPlace').value = p.birthPlace || "";
-            document.getElementById('gender').value = p.gender;
+            document.getElementById('gender').value = p.gender || "m";
             document.getElementById('deathDate').value = p.deathDate || "";
             
             document.getElementById('formTitle').innerText = `✏️ ${p.firstName} bearbeiten`;
             document.getElementById('formBox').style.display = "block";
         }
 
-        function generateCardHTML(id, roleLabel) {
+        function buildCard(id) {
             const p = familyTree[id];
-            if (!p) {
-                return `<div class="person-card" style="border:2px dashed #ccc; background:#eee; color:#aaa; font-size:0.65rem;">+ ${roleLabel}</div>`;
-            }
             const isDeceased = p.deathDate && p.deathDate.trim() !== "";
             return `
                 <div class="person-card ${p.gender === 'm' ? 'male' : 'female'} ${isDeceased ? 'deceased' : ''}" onclick="handleCardClick('${id}')">
@@ -181,43 +192,35 @@
         function renderTree() {
             const canvas = document.getElementById('treeCanvas');
             
-            // Baut die exakten 4 Schichten deines Wunschbildes von oben nach unten auf
             canvas.innerHTML = `
-                <!-- Schicht 4: Großeltern ganz oben -->
+                <!-- Generation 1: Großeltern -->
                 <div class="layer">
                     <div class="couple-unit">
-                        ${generateCardHTML("p4", "Uropa L.")}
-                        <div class="rings-label"></div>
-                        ${generateCardHTML("p5", "Uroma G.")}
+                        ${buildCard("p4")}<div class="rings-label">💍</div>${buildCard("p5")}
                     </div>
-                    <div class="couple-unit" style="margin-left:40px;">
-                        ${generateCardHTML("p8", "Großvater")}
-                        <div class="rings-label"></div>
-                        ${generateCardHTML("p9", "Großmutter")}
+                    <div style="width: 30px;"></div>
+                    <div class="couple-unit">
+                        ${buildCard("p8")}<div class="rings-label">💍</div>${buildCard("p9")}
                     </div>
                 </div>
 
-                <!-- Schicht 3: Eltern -->
+                <!-- Generation 2: Eltern -->
                 <div class="layer">
                     <div class="couple-unit">
-                        ${generateCardHTML("p2", "Vater")}
-                        <div class="rings-label">💍</div>
-                        ${generateCardHTML("p3", "Mutter")}
+                        ${buildCard("p2")}<div class="rings-label">💍</div>${buildCard("p3")}
                     </div>
                 </div>
 
-                <!-- Schicht 2: Du & Ehepartnerin -->
+                <!-- Generation 3: Ich & Ehepartnerin -->
                 <div class="layer">
                     <div class="couple-unit">
-                        ${generateCardHTML("p1", "Ich")}
-                        <div class="rings-label">💍</div>
-                        ${generateCardHTML("p6", "Partnerin")}
+                        ${buildCard("p1")}<div class="rings-label">💍</div>${buildCard("p6")}
                     </div>
                 </div>
 
-                <!-- Schicht 1: Kinder ganz unten -->
+                <!-- Generation 4: Kinder -->
                 <div class="layer">
-                    ${generateCardHTML("p7", "Kind")}
+                    ${buildCard("p7")}
                 </div>
             `;
         }
@@ -226,4 +229,5 @@
             e.preventDefault();
             const id = document.getElementById('activeId').value;
             
-            familyTree[id].firstName = document.getElementById('firstName').value;
+            if (familyTree[id]) {
+                familyTree[id].firstName = document.getElementById('firstName').value;
