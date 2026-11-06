@@ -19,26 +19,69 @@
         h1 {
             font-size: 1.3rem;
             color: #2c3e50;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
-        /* Der Stammbaum-Kasten */
-        .tree {
+        /* Stammbaum Struktur */
+        .tree-container {
             display: flex;
-            flex-direction: column-reverse; /* Dreht die Ansicht um: Kinder unten, Ahnen oben */
+            flex-direction: column;
             align-items: center;
-            gap: 40px;
-            position: relative;
+            width: 100%;
+            max-width: 500px;
         }
         .generation {
             display: flex;
             justify-content: center;
-            gap: 20px;
             width: 100%;
+            margin-bottom: 40px;
             position: relative;
+        }
+        /* Block für ein Elternpaar */
+        .couple-block {
+            display: flex;
+            gap: 15px;
+            position: relative;
+        }
+        /* Haupt-Verbindungslinien */
+        .couple-block::after {
+            content: "";
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            width: 2px;
+            height: 20px;
+            background: #bdc3c7;
+        }
+        .generation-parents .couple-block:nth-child(1)::before {
+            content: "";
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            right: -60px;
+            height: 2px;
+            background: #bdc3c7;
+        }
+        .generation-parents .couple-block:nth-child(2)::before {
+            content: "";
+            position: absolute;
+            bottom: -20px;
+            right: 50%;
+            left: -60px;
+            height: 2px;
+            background: #bdc3c7;
+        }
+        .generation-parents::after {
+            content: "";
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            width: 2px;
+            height: 20px;
+            background: #bdc3c7;
         }
         /* Karten-Styling */
         .node {
-            width: 110px;
+            width: 85px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.06);
@@ -49,51 +92,53 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100px;
+            min-height: 95px;
             border-top: 4px solid #bdc3c7;
+            z-index: 2;
         }
         .node.male { border-top-color: #3498db; }
         .node.female { border-top-color: #e74c3c; }
         
-        /* Platzhalter für fehlende Eltern */
         .node.placeholder {
             border: 2px dashed #bdc3c7;
             background: #eaeded;
             cursor: pointer;
             color: #7f8c8d;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: bold;
+            border-top: 2px dashed #bdc3c7;
         }
         .node.placeholder .plus {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             margin-bottom: 4px;
             background: #bdc3c7;
             color: white;
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         .avatar {
-            width: 40px;
-            height: 40px;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
             background: #eee;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
         }
         .name {
             font-weight: bold;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             word-break: break-word;
+            line-height: 1.1;
         }
         .date {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: #7f8c8d;
             margin-top: 2px;
         }
@@ -104,16 +149,10 @@
             background: none;
             border: none;
             color: #e74c3c;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             cursor: pointer;
         }
-        /* Verbindungslinien (CSS-Connector-Logik) */
-        .connect-line {
-            position: absolute;
-            background: #bdc3c7;
-            z-index: 1;
-        }
-        /* Eingabemaske am unteren Rand */
+        /* Eingabemaske */
         .form-container {
             position: fixed;
             bottom: 0; left: 0; right: 0;
@@ -128,7 +167,7 @@
         }
         .form-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 8px; }
         form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        input, select, button { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; }
+        input, button { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; }
         input[type="text"] { grid-column: span 2; }
         button.submit-btn { grid-column: span 2; background: #2ecc71; color: white; border: none; font-weight: bold; }
         button.cancel-btn { grid-column: span 2; background: #95a5a6; color: white; border: none; }
@@ -138,12 +177,10 @@
 
     <h1>🌳 Mein Stammbaum</h1>
 
-    <!-- Der Stammbaum-Bereich -->
-    <div class="tree" id="treeCanvas">
-        <!-- Wird komplett dynamisch durch JavaScript aufgebaut -->
+    <div class="tree-container" id="treeCanvas">
+        <!-- JS Generierung -->
     </div>
 
-    <!-- Das Formular -->
     <div class="form-container" id="formBox" style="display: none;">
         <div class="form-title" id="formTitle">Person hinzufügen</div>
         <form id="personForm">
@@ -152,14 +189,13 @@
             <input type="text" id="name" placeholder="Vor- und Nachname" required>
             <input type="number" id="birth" placeholder="Geburtsjahr">
             <input type="number" id="death" placeholder="Todesjahr (leer lassen wenn lebend)">
-            <button type="submit" class="submit-btn" id="submitBtn">Speichern</button>
+            <button type="submit" class="submit-btn">Speichern</button>
             <button type="button" class="cancel-btn" onclick="closeForm()">Abbrechen</button>
         </form>
     </div>
 
     <script>
-        // Strukturierte Daten: Jedes Mitglied hat feste Plätze für Vater und Mutter (IDs)
-        // ID 1 bist standardmäßig DU als Ausgangspunkt.
+        // Startdaten bereinigt und mit korrekter Logik
         let defaultData = {
             1: { name: "Alexander Presler", birth: "1982", death: "", gnd: "m", father: 2, mother: 3 },
             2: { name: "Vladimir Lagutochkin", birth: "1959", death: "", gnd: "m", father: 4, mother: 5 },
@@ -167,10 +203,10 @@
             5: { name: "Raisa Gredneva", birth: "1941", death: "", gnd: "f", father: 0, mother: 0 }
         };
 
-        let familyTree = JSON.parse(localStorage.getItem('fixedFamilyTree')) || defaultData;
+        let familyTree = JSON.parse(localStorage.getItem('fixedFamilyTree2')) || defaultData;
 
         function saveTree() {
-            localStorage.setItem('fixedFamilyTree', JSON.stringify(familyTree));
+            localStorage.setItem('fixedFamilyTree2', JSON.stringify(familyTree));
             renderTree();
         }
 
@@ -180,7 +216,6 @@
             document.getElementById('targetIndex').value = childId;
             document.getElementById('formTitle').innerText = parentRole === 'father' ? "➕ Vater hinzufügen" : "➕ Mutter hinzufügen";
             document.getElementById('formBox').style.display = "block";
-            document.getElementById('formBox').scrollIntoView({ behavior: 'smooth' });
         }
 
         function closeForm() {
@@ -188,9 +223,8 @@
         }
 
         function deleteNode(id) {
-            if(confirm("Möchtest du diese Person aus dem Stammbaum entfernen?")) {
+            if(confirm("Möchtest du diese Person entfernen?")) {
                 delete familyTree[id];
-                // Referenzen bei Kindern löschen
                 for (let key in familyTree) {
                     if(familyTree[key].father == id) familyTree[key].father = 0;
                     if(familyTree[key].mother == id) familyTree[key].mother = 0;
@@ -199,9 +233,9 @@
             }
         }
 
-        function createNodeHTML(id, role, childId, gender) {
+        function createNodeHTML(id, role, childId) {
             const person = familyTree[id];
-            if (person) {
+            if (person && person.name) {
                 const avatarEmoji = person.gnd === 'm' ? '👤' : '👩';
                 const dateText = person.birth ? `${person.birth}–${person.death || 'Lebend'}` : '';
                 return `
@@ -225,12 +259,6 @@
 
         function renderTree() {
             const canvas = document.getElementById('treeCanvas');
-            canvas.innerHTML = '';
-
-            // Hier bauen wir die 3 Generationen fest basierend auf ID 1 (Dir) auf:
-            // Gen 3: Urgroßeltern (Die Eltern von ID 2 und ID 3)
-            // Gen 2: Großeltern / Eltern (ID 2 und ID 3)
-            // Gen 1: Du / Kinder (ID 1)
             
             const p1 = familyTree[1] || { father: 0, mother: 0 };
             const fId = p1.father;
@@ -239,19 +267,12 @@
             const p2 = familyTree[fId] || { father: 0, mother: 0 };
             const p3 = familyTree[mId] || { father: 0, mother: 0 };
 
-            // HTML Struktur für die feste Hierarchie generieren
             canvas.innerHTML = `
                 <!-- Generation 3: Urgroßeltern -->
                 <div class="generation">
-                    ${createNodeHTML(p2.father, 'father', fId, 'm')}
-                    ${createNodeHTML(p2.mother, 'mother', fId, 'f')}
-                    ${createNodeHTML(p3.father, 'father', mId, 'm')}
-                    ${createNodeHTML(p3.mother, 'mother', mId, 'f')}
-                </div>
-                <!-- Generation 2: Eltern -->
-                <div class="generation">
-                    ${createNodeHTML(fId, 'father', 1, 'm')}
-                    ${createNodeHTML(mId, 'mother', 1, 'f')}
-                </div>
-                <!-- Generation 1: Hauptperson -->
-                <div class="generation">
+                    <div class="couple-block">
+                        ${createNodeHTML(p2.father, 'father', fId)}
+                        ${createNodeHTML(p2.mother, 'mother', fId)}
+                    </div>
+                    <div style="width: 30px;"></div>
+                    <div class="couple-block">
