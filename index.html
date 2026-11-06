@@ -3,13 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stammbaum Profi</title>
+    <title>Mein Stammbaum Profi</title>
     <style>
+        /* Versionsanzeige oben links */
+        .version-stamp {
+            position: absolute;
+            top: 5px;
+            left: 10px;
+            font-size: 0.65rem;
+            color: #95a5a6;
+            font-family: monospace;
+            z-index: 2000;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             background-color: #f3f4f6;
             margin: 0;
-            padding: 20px;
+            padding: 30px 20px 20px 20px;
             padding-bottom: 300px;
             display: flex;
             flex-direction: column;
@@ -17,7 +27,7 @@
         }
         h1 { font-size: 1.2rem; color: #2c3e50; margin-bottom: 25px; }
         
-        /* Baum-Layout */
+        /* Das exakte Stammbaum-Verästelungsnetzwerk aus deinem Bild */
         .tree-grid {
             display: flex;
             flex-direction: column;
@@ -33,7 +43,7 @@
             position: relative;
         }
         
-        /* Verbindungslinien zwischen Generationen */
+        /* Durchgehende Verbindungslinien */
         .layer::after {
             content: "";
             position: absolute;
@@ -72,7 +82,7 @@
             cursor: pointer;
         }
         .person-card.male { border-color: #3498db; }
-        .person-card.female { border-color: #f78fb3; } /* Rosa Rand */
+        .person-card.female { border-color: #f78fb3; } /* Rosa Umrandung */
         
         /* Schwarzes Trauer-Dreieck oben links */
         .person-card.deceased::before {
@@ -89,7 +99,7 @@
         .info-display { font-size: 0.65rem; color: #7f8c8d; line-height: 1.2; }
         .rings-label { font-size: 1.1rem; color: #f1c40f; z-index: 15; }
 
-        /* Eingabemaske am unteren Rand (Standardmäßig versteckt) */
+        /* Versteckte Eingabemaske am unteren Rand */
         .form-container {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: white; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
@@ -106,11 +116,14 @@
 </head>
 <body>
 
+    <!-- Die Versionskontrolle -->
+    <div class="version-stamp">Code-Version: 06.11.2026, 21:58:44 Uhr</div>
+
     <h1>🌳 Mein Stammbaum Profi</h1>
 
     <div class="tree-grid" id="treeCanvas"></div>
 
-    <!-- Das ausgeblendete Formular -->
+    <!-- Die verdeckte Maske -->
     <div class="form-container" id="formBox">
         <div class="form-title" id="formTitle">Person bearbeiten</div>
         <form id="personForm">
@@ -133,7 +146,7 @@
     </div>
 
     <script>
-        // Sichere und vollständige Grunddaten
+        // Absturzsichere Datenbasis (Deine Familie aus der Bildübersicht)
         let initialData = {
             "p1": { firstName: "Alexander", lastName: "Presler", birthDate: "1982", birthPlace: "München", deathDate: "", gender: "m" },
             "p2": { firstName: "Vladimir", lastName: "Lagutochkin", birthDate: "1959", birthPlace: "", deathDate: "", gender: "m" },
@@ -146,11 +159,18 @@
             "p9": { firstName: "Großmutter", lastName: "Presler", birthDate: "1935", birthPlace: "", deathDate: "", gender: "f" }
         };
 
-        // Neues, komplett unberührtes Storage-Label gegen alte Speicherleichen
-        let familyTree = JSON.parse(localStorage.getItem('antiCrashTreePro')) || initialData;
+        // Neues, komplett isoliertes Label um Cache-Konflikte zu brechen
+        let familyTree;
+        try {
+            familyTree = JSON.parse(localStorage.getItem('isolatedFinalTreeStream')) || initialData;
+        } catch(e) {
+            familyTree = initialData;
+        }
 
         function saveAndRefresh() {
-            localStorage.setItem('antiCrashTreePro', JSON.stringify(familyTree));
+            try {
+                localStorage.setItem('isolatedFinalTreeStream', JSON.stringify(familyTree));
+            } catch(e) {}
             renderTree();
         }
 
@@ -175,7 +195,8 @@
         }
 
         function buildCard(id) {
-            const p = familyTree[id];
+            // Ausfallsicherung: Falls eine ID im Speicher fehlt, bricht das System nicht ab
+            const p = familyTree[id] || { firstName: "Unbekannt", lastName: "", birthDate: "", birthPlace: "", deathDate: "", gender: "m" };
             const isDeceased = p.deathDate && p.deathDate.trim() !== "";
             return `
                 <div class="person-card ${p.gender === 'm' ? 'male' : 'female'} ${isDeceased ? 'deceased' : ''}" onclick="handleCardClick('${id}')">
@@ -191,9 +212,10 @@
 
         function renderTree() {
             const canvas = document.getElementById('treeCanvas');
+            if(!canvas) return;
             
             canvas.innerHTML = `
-                <!-- Generation 1: Großeltern -->
+                <!-- Generation 1: Großeltern ganz oben -->
                 <div class="layer">
                     <div class="couple-unit">
                         ${buildCard("p4")}<div class="rings-label">💍</div>${buildCard("p5")}
@@ -204,30 +226,8 @@
                     </div>
                 </div>
 
-                <!-- Generation 2: Eltern -->
+                <!-- Generation 2: Eltern darunter -->
                 <div class="layer">
                     <div class="couple-unit">
                         ${buildCard("p2")}<div class="rings-label">💍</div>${buildCard("p3")}
                     </div>
-                </div>
-
-                <!-- Generation 3: Ich & Ehepartnerin -->
-                <div class="layer">
-                    <div class="couple-unit">
-                        ${buildCard("p1")}<div class="rings-label">💍</div>${buildCard("p6")}
-                    </div>
-                </div>
-
-                <!-- Generation 4: Kinder -->
-                <div class="layer">
-                    ${buildCard("p7")}
-                </div>
-            `;
-        }
-
-        document.getElementById('personForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const id = document.getElementById('activeId').value;
-            
-            if (familyTree[id]) {
-                familyTree[id].firstName = document.getElementById('firstName').value;
