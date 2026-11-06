@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stammbaum Profi</title>
     <style>
-        /* Kontrollzeile */
         .version-stamp {
             position: absolute;
             top: 5px;
@@ -62,7 +61,6 @@
             position: relative;
         }
         
-        /* Personenkarten */
         .person-card {
             width: 105px;
             background: white;
@@ -83,15 +81,6 @@
         .person-card.male { border-color: #3498db; }
         .person-card.female { border-color: #f78fb3; }
         
-        /* Gestrichelte Karte zum Hinzufügen */
-        .person-card.placeholder {
-            border: 2px dashed #bdc3c7;
-            background: #eaeded;
-            color: #7f8c8d;
-            font-size: 0.7rem;
-            font-weight: bold;
-        }
-        
         .person-card.deceased::before {
             content: "";
             position: absolute;
@@ -106,7 +95,6 @@
         .info-display { font-size: 0.6rem; color: #7f8c8d; line-height: 1.2; }
         .rings-label { font-size: 1rem; color: #f1c40f; z-index: 15; }
 
-        /* Eingabemaske am unteren Rand (wird eingeblendet) */
         .form-container {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: white; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
@@ -123,107 +111,110 @@
 </head>
 <body>
 
-    <div class="version-stamp">Coderstellung: 06.11.2026, 22:45:00 Uhr | Version: 3.0</div>
+    <div class="version-stamp">Coderstellung: 06.11.2026, 22:30:00 Uhr | Version: 3.1</div>
 
     <h1>🌳 Mein Stammbaum Profi</h1>
 
     <div class="tree-grid" id="treeCanvas"></div>
 
-    <!-- Eingabemaske -->
     <div class="form-container" id="formBox">
         <div class="form-title" id="formTitle">Person bearbeiten</div>
         <form id="personForm">
             <input type="hidden" id="activeId">
             <input type="text" id="firstName" placeholder="Vorname" required>
             <input type="text" id="lastName" placeholder="Nachname" required>
-            <input type="text" id="birthDate" placeholder="Geburtsdatum (z.B. 1982)">
+            <input type="text" id="birthDate" placeholder="Geburtsdatum">
             <input type="text" id="birthPlace" placeholder="Geburtsort">
             <select id="gender">
                 <option value="m">Männlich (Blauer Rand)</option>
                 <option value="f">Weiblich (Rosa Rand)</option>
             </select>
-            <input type="text" id="deathDate" placeholder="Todestag (leer lassen falls lebend)">
+            <input type="text" id="deathDate" placeholder="Todestag (leer lassen wenn lebend)">
             <button type="submit" class="submit-btn full-width">Speichern</button>
             <button type="button" class="cancel-btn full-width" onclick="closeForm()">Abbrechen</button>
         </form>
     </div>
 
     <script>
-        // Lokale, absturzsichere Datenstruktur
-        var initialData = {
-            "p4": { firstName: "Uropa", lastName: "Lagutochkin", birthDate: "1920", birthPlace: "", deathDate: "1995", gender: "m", isSet: true },
-            "p5": { firstName: "Raisa", lastName: "Gredneva", birthDate: "1941", birthPlace: "", deathDate: "12.10.2020", gender: "f", isSet: true },
-            "p8": { firstName: "Großvater", lastName: "Presler", birthDate: "1930", birthPlace: "", deathDate: "2005", gender: "m", isSet: true },
-            "p9": { firstName: "Großmutter", lastName: "Presler", birthDate: "1935", birthPlace: "", deathDate: "", gender: "f", isSet: true },
-            "p2": { firstName: "Vladimir", lastName: "Lagutochkin", birthDate: "1959", birthPlace: "", deathDate: "", gender: "m", isSet: true },
-            "p3": { firstName: "Swetlana", lastName: "Presler", birthDate: "1961", birthPlace: "", deathDate: "", gender: "f", isSet: true },
-            "p1": { firstName: "Alexander", lastName: "Presler", birthDate: "1982", birthPlace: "München", deathDate: "", gender: "m", isSet: true },
-            "p6": { firstName: "Elina", lastName: "Presler", birthDate: "1986", birthPlace: "", deathDate: "", gender: "f", isSet: true },
-            "p7": { firstName: "Emma", lastName: "Presler", birthDate: "2018", birthPlace: "", deathDate: "", gender: "f", isSet: true }
+        // Komplett bereinigte, fest eingebundene Objektdaten, um Speicherfehler auszuschließen
+        var familyTree = {
+            "p4": { firstName: "Uropa", lastName: "Lagutochkin", birthDate: "1920", birthPlace: "", deathDate: "1995", gender: "m" },
+            "p5": { firstName: "Raisa", lastName: "Gredneva", birthDate: "1941", birthPlace: "", deathDate: "12.10.2020", gender: "f" },
+            "p8": { firstName: "Großvater", lastName: "Presler", birthDate: "1930", birthPlace: "", deathDate: "2005", gender: "m" },
+            "p9": { firstName: "Großmutter", lastName: "Presler", birthDate: "1935", birthPlace: "", deathDate: "", gender: "f" },
+            "p2": { firstName: "Vladimir", lastName: "Lagutochkin", birthDate: "1959", birthPlace: "", deathDate: "", gender: "m" },
+            "p3": { firstName: "Swetlana", lastName: "Presler", birthDate: "1961", birthPlace: "", deathDate: "", gender: "f" },
+            "p1": { firstName: "Alexander", lastName: "Presler", birthDate: "1982", birthPlace: "München", deathDate: "", gender: "m" },
+            "p6": { firstName: "Elina", lastName: "Presler", birthDate: "1986", birthPlace: "", deathDate: "", gender: "f" },
+            "p7": { firstName: "Emma", lastName: "Presler", birthDate: "2018", birthPlace: "", deathDate: "", gender: "f" }
         };
-
-        var familyTree = JSON.parse(localStorage.getItem('interactiveProfiTreeDataV3')) || initialData;
-
-        function saveAndRefresh() {
-            localStorage.setItem('interactiveProfiTreeDataV3', JSON.stringify(familyTree));
-            renderTree();
-        }
-
-        function closeForm() { document.getElementById('formBox').style.display = "none"; }
-
-        function handleCardClick(id, defaultGender, label) {
-            var p = familyTree[id] || { firstName: "", lastName: "", birthDate: "", birthPlace: "", deathDate: "", gender: defaultGender, isSet: false };
-            
-            document.getElementById('personForm').reset();
-            document.getElementById('activeId').value = id;
-            document.getElementById('firstName').value = p.firstName;
-            document.getElementById('lastName').value = p.lastName || label;
-            document.getElementById('birthDate').value = p.birthDate;
-            document.getElementById('birthPlace').value = p.birthPlace;
-            document.getElementById('gender').value = p.gender;
-            document.getElementById('deathDate').value = p.deathDate;
-            
-            document.getElementById('formTitle').innerText = p.isSet ? "✏️ " + p.firstName + " bearbeiten" : "➕ " + label + " hinzufügen";
-            document.getElementById('formBox').style.display = "block";
-        }
-
-        function buildCardElement(id, defaultGender, label) {
-            var p = familyTree[id];
-            
-            // Wenn die Karte noch nicht ausgefüllt wurde, zeigen wir einen Plus-Platzhalter
-            if (!p || !p.isSet) {
-                var ph = document.createElement('div');
-                ph.className = "person-card placeholder";
-                ph.innerHTML = "<div>+</div><div>" + label + "</div>";
-                ph.onclick = function() { handleCardClick(id, defaultGender, label); };
-                return ph;
-            }
-
-            var isDeceased = p.deathDate && p.deathDate.trim() !== "";
-            var card = document.createElement('div');
-            card.className = "person-card " + (p.gender === 'm' ? 'male' : 'female');
-            if (isDeceased) card.className += " deceased";
-            card.onclick = function() { handleCardClick(id, p.gender, label); };
-
-            var nameDiv = document.createElement('div');
-            nameDiv.className = "name-display";
-            nameDiv.innerText = p.firstName + "\n" + p.lastName;
-            card.appendChild(nameDiv);
-
-            var infoDiv = document.createElement('div');
-            infoDiv.className = "info-display";
-            infoDiv.innerHTML = "<div>* " + (p.birthDate || '') + "</div>";
-            if(p.birthPlace) infoDiv.innerHTML += "<div>📍 " + p.birthPlace + "</div>";
-            infoDiv.innerHTML += "<div>" + (p.deathDate ? "† " + p.deathDate : "Lebend") + "</div>";
-
-            card.appendChild(infoDiv);
-            return card;
-        }
 
         function renderTree() {
             var canvas = document.getElementById('treeCanvas');
             if(!canvas) return;
             canvas.innerHTML = "";
 
-            // Ebene 1
-            var l1 = document.createElement('div'); l1.className = "layer";
+            var structure = [
+                [["p4", "m", "Uropa"], ["p5", "f", "Uroma"], ["p8", "m", "Großvater"], ["p9", "f", "Großmutter"]],
+                [["p2", "m", "Vater"], ["p3", "f", "Mutter"]],
+                [["p1", "m", "Ich"], ["p6", "f", "Partnerin"]],
+                [["p7", "f", "Kind"]]
+            ];
+
+            for (var i = 0; i < structure.length; i++) {
+                var layerDiv = document.createElement('div');
+                layerDiv.className = "layer";
+                
+                var items = structure[i];
+                if (items.length === 4) {
+                    // Großeltern-Paarung splitten
+                    layerDiv.appendChild(createPair(items[0], items[1]));
+                    var spacer = document.createElement('div'); spacer.style.width = "15px"; layerDiv.appendChild(spacer);
+                    layerDiv.appendChild(createPair(items[2], items[3]));
+                } else if (items.length === 2) {
+                    layerDiv.appendChild(createPair(items[0], items[1]));
+                } else {
+                    layerDiv.appendChild(createCard(items[0][0], items[0][1], items[0][2]));
+                }
+                canvas.appendChild(layerDiv);
+            }
+        }
+
+        function createPair(item1, item2) {
+            var unit = document.createElement('div');
+            unit.className = "couple-unit";
+            unit.appendChild(createCard(item1[0], item1[1], item1[2]));
+            var ring = document.createElement('div'); ring.className = "rings-label"; ring.innerText = "💍"; unit.appendChild(ring);
+            unit.appendChild(createCard(item2[0], item2[1], item2[2]));
+            return unit;
+        }
+
+        function createCard(id, defGender, label) {
+            var p = familyTree[id];
+            var isDeceased = p.deathDate && p.deathDate.trim() !== "";
+            
+            var card = document.createElement('div');
+            card.className = "person-card " + (p.gender === 'm' ? 'male' : 'female');
+            if (isDeceased) card.className += " deceased";
+            
+            card.onclick = function() {
+                document.getElementById('personForm').reset();
+                document.getElementById('activeId').value = id;
+                document.getElementById('firstName').value = p.firstName;
+                document.getElementById('lastName').value = p.lastName;
+                document.getElementById('birthDate').value = p.birthDate;
+                document.getElementById('birthPlace').value = p.birthPlace;
+                document.getElementById('gender').value = p.gender;
+                document.getElementById('deathDate').value = p.deathDate;
+                document.getElementById('formTitle').innerText = "✏️ " + p.firstName + " bearbeiten";
+                document.getElementById('formBox').style.display = "block";
+            };
+
+            var nameDiv = document.createElement('div'); nameDiv.className = "name-display"; nameDiv.innerText = p.firstName + "\n" + p.lastName; card.appendChild(nameDiv);
+            var infoDiv = document.createElement('div'); infoDiv.className = "info-display"; infoDiv.innerHTML = "<div>* " + p.birthDate + "</div>";
+            if(p.birthPlace) infoDiv.innerHTML += "<div>📍 " + p.birthPlace + "</div>";
+            infoDiv.innerHTML += "<div>" + (isDeceased ? "† " + p.deathDate : "Lebend") + "</div>";
+            card.appendChild(infoDiv);
+            return card;
+        }
+
