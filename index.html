@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stammbaum Profi</title>
     <style>
+        /* Feste Kontrollzeile oben links */
         .version-stamp {
             position: absolute;
             top: 5px;
@@ -19,13 +20,13 @@
             background-color: #f3f4f6;
             margin: 0;
             padding: 35px 10px 20px 10px;
-            padding-bottom: 300px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
         h1 { font-size: 1.2rem; color: #2c3e50; margin-bottom: 25px; }
         
+        /* Das exakte Layout aus deinem Wunschbild */
         .tree-grid {
             display: flex;
             flex-direction: column;
@@ -42,7 +43,7 @@
             position: relative;
         }
         
-        /* Die grauen Verbindungslinien zwischen den Generationen */
+        /* Die vertikalen Verbindungslinien nach unten zur nächsten Generation */
         .layer::after {
             content: "";
             position: absolute;
@@ -78,12 +79,11 @@
             justify-content: center;
             gap: 2px;
             z-index: 10;
-            cursor: pointer;
         }
-        .person-card.male { border-color: #3498db; }
-        .person-card.female { border-color: #f78fb3; } /* Rosa Umrandung für Frauen */
+        .person-card.male { border-color: #3498db; } /* Blauer Rand für Männer */
+        .person-card.female { border-color: #f78fb3; } /* Rosa Rand für Frauen */
         
-        /* Schwarzes Trauer-Dreieck oben links */
+        /* Schwarzes Trauer-Dreieck oben links für Verstorbene */
         .person-card.deceased::before {
             content: "";
             position: absolute;
@@ -97,142 +97,84 @@
         .name-display { font-weight: bold; font-size: 0.75rem; color: #2c3e50; line-height: 1.2; }
         .info-display { font-size: 0.6rem; color: #7f8c8d; line-height: 1.2; }
         .rings-label { font-size: 1rem; color: #f1c40f; z-index: 15; }
-
-        /* Versteckte Eingabemaske am unteren Rand */
-        .form-container {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background: white; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-            border-top-left-radius: 16px; border-top-right-radius: 16px;
-            max-height: 280px; overflow-y: auto; z-index: 1000; display: none;
-        }
-        .form-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 8px; color: #2c3e50; }
-        form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        input, select, button { padding: 9px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; }
-        .full-width { grid-column: span 2; }
-        button.submit-btn { background: #2ecc71; color: white; border: none; font-weight: bold; }
-        button.cancel-btn { background: #95a5a6; color: white; border: none; }
     </style>
 </head>
 <body>
 
-    <!-- Dynamischer Zeitstempel für Echtzeit-Erkennung -->
-    <div class="version-stamp">Geladen um: <span id="liveClock">--:--:--</span></div>
+    <!-- Die von dir gewünschte Kontrollzeile -->
+    <div class="version-stamp">Coderstellung: 06.11.2026, 22:35:00 Uhr | Version: 2.4</div>
 
     <h1>🌳 Mein Stammbaum Profi</h1>
 
-    <div class="tree-grid" id="treeCanvas"></div>
+    <!-- Das Stammbaum-Diagramm (Reines HTML) -->
+    <div class="tree-grid">
+        
+        <!-- Schicht 1: Großeltern -->
+        <div class="layer">
+            <div class="couple-unit">
+                <div class="person-card male deceased">
+                    <div class="name-display">Uropa<br>Lagutochkin</div>
+                    <div class="info-display"><div>* 1920</div><div>† 1995</div></div>
+                </div>
+                <div class="rings-label"></div>
+                <div class="person-card female deceased">
+                    <div class="name-display">Raisa<br>Gredneva</div>
+                    <div class="info-display"><div>* 1941</div><div>† 12.10.2020</div></div>
+                </div>
+            </div>
+            <div style="width: 15px;"></div>
+            <div class="couple-unit">
+                <div class="person-card male deceased">
+                    <div class="name-display">Großvater<br>Presler</div>
+                    <div class="info-display"><div>* 1930</div><div>† 2005</div></div>
+                </div>
+                <div class="rings-label"></div>
+                <div class="person-card female">
+                    <div class="name-display">Großmutter<br>Presler</div>
+                    <div class="info-display"><div>* 1935</div><div>Lebend</div></div>
+                </div>
+            </div>
+        </div>
 
-    <div class="form-container" id="formBox">
-        <div class="form-title" id="formTitle">Person bearbeiten</div>
-        <form id="personForm">
-            <input type="hidden" id="activeId">
-            <input type="text" id="firstName" placeholder="Vorname" required>
-            <input type="text" id="lastName" placeholder="Nachname" required>
-            <input type="text" id="birthDate" placeholder="Geburtsdatum">
-            <input type="text" id="birthPlace" placeholder="Geburtsort">
-            <select id="gender">
-                <option value="m">Männlich (Blauer Rand)</option>
-                <option value="f">Weiblich (Rosa Rand)</option>
-            </select>
-            <input type="text" id="deathDate" placeholder="Todestag (leer lassen wenn lebend)">
-            <button type="submit" class="submit-btn full-width">Speichern</button>
-            <button type="button" class="cancel-btn full-width" onclick="closeForm()">Abbrechen</button>
-        </form>
+        <!-- Schicht 2: Eltern -->
+        <div class="layer">
+            <div class="couple-unit">
+                <div class="person-card male">
+                    <div class="name-display">Vladimir<br>Lagutochkin</div>
+                    <div class="info-display"><div>* 01.08.1959</div><div>Lebend</div></div>
+                </div>
+                <div class="rings-label">💍</div>
+                <div class="person-card female">
+                    <div class="name-display">Swetlana<br>Presler</div>
+                    <div class="info-display"><div>* 01.06.1961</div><div>Lebend</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schicht 3: Ich & Ehepartnerin -->
+        <div class="layer">
+            <div class="couple-unit">
+                <div class="person-card male">
+                    <div class="name-display">Alexander<br>Presler</div>
+                    <div class="info-display"><div>* 1982</div><div>📍 München</div><div>Lebend</div></div>
+                </div>
+                <div class="rings-label">💍</div>
+                <div class="person-card female">
+                    <div class="name-display">Elina<br>Presler</div>
+                    <div class="info-display"><div>* 1986</div><div>Lebend</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schicht 4: Kinder -->
+        <div class="layer">
+            <div class="person-card female">
+                <div class="name-display">Emma<br>Presler</div>
+                <div class="info-display"><div>* 2018</div><div>Lebend</div></div>
+            </div>
+        </div>
+
     </div>
 
-    <script>
-        // Echtzeit-Uhr starten, damit du sofort siehst, dass die Seite frisch geladen ist
-        function updateClock() {
-            var now = new Date();
-            var timeString = now.toLocaleDateString('de-DE') + ', ' + now.toLocaleTimeString('de-DE') + ' Uhr';
-            document.getElementById('liveClock').innerText = timeString;
-        }
-        updateClock();
-
-        var initialData = {
-            "p1": { firstName: "Alexander", lastName: "Presler", birthDate: "1982", birthPlace: "München", deathDate: "", gender: "m" },
-            "p2": { firstName: "Vladimir", lastName: "Lagutochkin", birthDate: "1959", birthPlace: "", deathDate: "", gender: "m" },
-            "p3": { firstName: "Swetlana", lastName: "Presler", birthDate: "1961", birthPlace: "", deathDate: "", gender: "f" },
-            "p4": { firstName: "Uropa", lastName: "Lagutochkin", birthDate: "1920", birthPlace: "", deathDate: "1995", gender: "m" },
-            "p5": { firstName: "Raisa", lastName: "Gredneva", birthDate: "1941", birthPlace: "", deathDate: "12.10.2020", gender: "f" },
-            "p6": { firstName: "Elina", lastName: "Presler", birthDate: "1986", birthPlace: "", deathDate: "", gender: "f" },
-            "p7": { firstName: "Emma", lastName: "Presler", birthDate: "2018", birthPlace: "", deathDate: "", gender: "f" },
-            "p8": { firstName: "Großvater", lastName: "Presler", birthDate: "1930", birthPlace: "", deathDate: "2005", gender: "m" },
-            "p9": { firstName: "Großmutter", lastName: "Presler", birthDate: "1935", birthPlace: "", deathDate: "", gender: "f" }
-        };
-
-        var familyTree;
-        try {
-            familyTree = JSON.parse(localStorage.getItem('finalTreeDynamicClock')) || initialData;
-        } catch(e) {
-            familyTree = initialData;
-        }
-
-        function saveAndRefresh() {
-            try {
-                localStorage.setItem('finalTreeDynamicClock', JSON.stringify(familyTree));
-            } catch(e) {}
-            renderTree();
-        }
-
-        function closeForm() { document.getElementById('formBox').style.display = "none"; }
-
-        function handleCardClick(id) {
-            var p = familyTree[id];
-            if(!p) return;
-            
-            document.getElementById('personForm').reset();
-            document.getElementById('activeId').value = id;
-            document.getElementById('firstName').value = p.firstName || "";
-            document.getElementById('lastName').value = p.lastName || "";
-            document.getElementById('birthDate').value = p.birthDate || "";
-            document.getElementById('birthPlace').value = p.birthPlace || "";
-            document.getElementById('gender').value = p.gender || "m";
-            document.getElementById('deathDate').value = p.deathDate || "";
-            
-            document.getElementById('formTitle').innerText = "✏️ " + p.firstName + " bearbeiten";
-            document.getElementById('formBox').style.display = "block";
-        }
-
-        function buildCardElement(id) {
-            var p = familyTree[id] || { firstName: "Unbekannt", lastName: "", birthDate: "", birthPlace: "", deathDate: "", gender: "m" };
-            var isDeceased = p.deathDate && p.deathDate.trim() !== "";
-            
-            var card = document.createElement('div');
-            card.className = "person-card " + (p.gender === 'm' ? 'male' : 'female');
-            if (isDeceased) card.className += " deceased";
-            
-            card.onclick = function() { handleCardClick(id); };
-
-            var nameDiv = document.createElement('div');
-            nameDiv.className = "name-display";
-            nameDiv.innerText = p.firstName + "\n" + p.lastName;
-            card.appendChild(nameDiv);
-
-            var infoDiv = document.createElement('div');
-            infoDiv.className = "info-display";
-            
-            var bDiv = document.createElement('div');
-            bDiv.innerText = "* " + (p.birthDate || '');
-            infoDiv.appendChild(bDiv);
-            
-            if(p.birthPlace) {
-                var pDiv = document.createElement('div');
-                pDiv.innerText = "📍 " + p.birthPlace;
-                infoDiv.appendChild(pDiv);
-            }
-            
-            var dDiv = document.createElement('div');
-            dDiv.innerText = p.deathDate ? "† " + p.deathDate : "Lebend";
-            infoDiv.appendChild(dDiv);
-
-            card.appendChild(infoDiv);
-            return card;
-        }
-
-        function renderTree() {
-            var canvas = document.getElementById('treeCanvas');
-            if(!canvas) return;
-            canvas.innerHTML = "";
-
-            // Schicht 1 (Ganz oben)
+</body>
+</html>
