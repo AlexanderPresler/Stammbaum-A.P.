@@ -2,10 +2,9 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Stammbaum Profi</title>
     <style>
-        /* Kontrollzeile */
         .version-stamp {
             position: fixed;
             top: 5px;
@@ -15,63 +14,47 @@
             font-family: monospace;
             z-index: 3000;
         }
-        /* Fester Zoom-Schieberegler oben rechts */
-        .zoom-controls {
-            position: fixed;
-            top: 5px;
-            right: 10px;
-            z-index: 3000;
-            background: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        .zoom-controls input {
-            width: 100px;
-        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             background-color: #f3f4f6;
             margin: 0;
-            padding: 60px 10px 300px 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none; /* Deaktiviert das Standard-Browser-Scrollen für flüssiges Schieben */
         }
         h1 { 
+            position: fixed;
+            top: 15px;
+            text-align: center;
+            width: 100%;
             font-size: 1.2rem; 
             color: #2c3e50; 
-            margin-bottom: 25px;
-            text-align: center;
+            z-index: 100;
+            pointer-events: none;
         }
         
-        /* Haupt-Arbeitsfläche */
-        .tree-wrapper {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            overflow-x: auto;
-            padding: 20px 0;
+        /* Großer interaktiver Arbeitsbereich */
+        .viewport {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
         }
         
-        /* Zentrierter Stammbaum mit dynamischem Zoom */
+        /* Absolut zentriertes Diagramm */
         .tree-grid {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 45px;
-            transform-origin: top center;
-            transform: scale(0.7); /* Startet vorteilhaft leicht herausgezoomt */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.65); /* Startet vorteilhaft herausgezoomt */
+            transform-origin: center center;
             width: 850px;
-            transition: transform 0.1s ease-out;
         }
         
         .layer {
@@ -97,13 +80,13 @@
         
         /* Personenkarten */
         .person-card {
-            width: 115px;
+            width: 110px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.06);
             text-align: center;
-            padding: 10px 4px 6px 4px;
-            min-height: 100px;
+            padding: 12px 4px;
+            min-height: 95px;
             border: 3px solid #bdc3c7;
             position: relative;
             display: flex;
@@ -121,25 +104,9 @@
             border-top-left-radius: 4px; z-index: 12;
         }
 
-        .name-display { font-weight: bold; font-size: 0.75rem; color: #2c3e50; line-height: 1.2; }
-        .info-display { font-size: 0.6rem; color: #7f8c8d; line-height: 1.2; margin-bottom: 4px; }
-        .rings-label { font-size: 1.1rem; color: #f1c40f; z-index: 15; }
-        
-        /* Unblockierbarer Bearbeitungsbutton auf jeder Karte */
-        .edit-trigger-btn {
-            background-color: #34495e;
-            color: white;
-            border: none;
-            font-size: 0.55rem;
-            font-weight: bold;
-            padding: 3px 6px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: auto;
-            width: 80%;
-            align-self: center;
-            z-index: 20;
-        }
+        .name-display { font-weight: bold; font-size: 0.75rem; color: #2c3e50; line-height: 1.2; pointer-events: none; }
+        .info-display { font-size: 0.6rem; color: #7f8c8d; line-height: 1.2; pointer-events: none; }
+        .rings-label { font-size: 1rem; color: #f1c40f; z-index: 15; }
 
         /* Eingabemaske am unteren Rand */
         .form-container {
@@ -159,47 +126,38 @@
 </head>
 <body>
 
-    <!-- Die Kontrollzeile -->
-    <div class="version-stamp">Coderstellung: 06.11.2026, 23:12:00 Uhr | Version: 11.0</div>
-
-    <!-- Der Zoom-Schieberegler oben rechts -->
-    <div class="zoom-controls">
-        <span>🔍 Zoom:</span>
-        <input type="range" id="zoomSlider" min="15" max="150" value="70">
-    </div>
+    <!-- Kontrollzeile -->
+    <div class="version-stamp">Coderstellung: 06.11.2026, 23:20:00 Uhr | Version: 12.0</div>
 
     <h1>🌳 Mein Stammbaum Profi</h1>
 
-    <div class="tree-wrapper">
+    <!-- Verschiebbare & Zoombare Oberfläche -->
+    <div class="viewport" id="viewport">
         <div class="tree-grid" id="treeCanvas">
             
             <!-- Schicht 1: Großeltern -->
             <div class="layer">
                 <div class="couple-unit">
-                    <div class="person-card male deceased">
+                    <div class="person-card male deceased" id="p4">
                         <div class="name-display" id="p4-name">Uropa<br>Lagutochkin</div>
                         <div class="info-display" id="p4-info"><div>* 1920</div><div>† 1995</div></div>
-                        <button class="edit-trigger-btn" onclick="openForm('p4')">✏️ Ändern</button>
                     </div>
                     <div class="rings-label">💍</div>
-                    <div class="person-card female deceased">
+                    <div class="person-card female deceased" id="p5">
                         <div class="name-display" id="p5-name">Raisa<br>Gredneva</div>
                         <div class="info-display" id="p5-info"><div>* 1941</div><div>† 12.10.2020</div></div>
-                        <button class="edit-trigger-btn" onclick="openForm('p5')">✏️ Ändern</button>
                     </div>
                 </div>
                 <div style="width: 20px;"></div>
                 <div class="couple-unit">
-                    <div class="person-card male deceased">
+                    <div class="person-card male deceased" id="p8">
                         <div class="name-display" id="p8-name">Großvater<br>Presler</div>
                         <div class="info-display" id="p8-info"><div>* 1930</div><div>† 2005</div></div>
-                        <button class="edit-trigger-btn" onclick="openForm('p8')">✏️ Ändern</button>
                     </div>
                     <div class="rings-label">💍</div>
-                    <div class="person-card female">
+                    <div class="person-card female" id="p9">
                         <div class="name-display" id="p9-name">Großmutter<br>Presler</div>
                         <div class="info-display" id="p9-info"><div>* 1935</div><div>Lebend</div></div>
-                        <button class="edit-trigger-btn" onclick="openForm('p9')">✏️ Ändern</button>
                     </div>
                 </div>
             </div>
@@ -207,38 +165,67 @@
             <!-- Schicht 2: Eltern -->
             <div class="layer">
                 <div class="couple-unit">
-                    <div class="person-card male">
+                    <div class="person-card male" id="p2">
                         <div class="name-display" id="p2-name">Vladimir<br>Lagutochkin</div>
                         <div class="info-display" id="p2-info"><div>* 1959</div><div>Lebend</div></div>
-                        <button class="edit-trigger-btn" onclick="openForm('p2')">✏️ Ändern</button>
                     </div>
                     <div class="rings-label">💍</div>
-                    <div class="person-card female">
+                    <div class="person-card female" id="p3">
                         <div class="name-display" id="p3-name">Swetlana<br>Presler</div>
                         <div class="info-display" id="p3-info"><div>* 1961</div><div>Lebend</div></div>
-                        <button class="edit-trigger-btn" onclick="openForm('p3')">✏️ Ändern</button>
                     </div>
                 </div>
             </div>
             
-            <!-- Schicht 3: Ich & Elina -->
+            <!-- Schicht 3: Ich -->
             <div class="layer">
                 <div class="couple-unit">
-                    <div class="person-card male">
+                    <div class="person-card male" id="p1">
                         <div class="name-display" id="p1-name">Alexander<br>Presler</div>
                         <div class="info-display" id="p1-info"><div>* 1982</div><div>📍 München</div><div>Lebend</div></div>
-                        <button class="edit-trigger-btn" onclick="openForm('p1')">✏️ Ändern</button>
                     </div>
                     <div class="rings-label">💍</div>
-                    <div class="person-card female">
+                    <div class="person-card female" id="p6">
                         <div class="name-display" id="p6-name">Elina<br>Presler</div>
                         <div class="info-display" id="p6-info"><div>* 1986</div><div>Lebend</div></div>
-                        <button class="edit-trigger-btn" onclick="openForm('p6')">✏️ Ändern</button>
                     </div>
                 </div>
             </div>
             
             <!-- Schicht 4: Kinder -->
             <div class="layer">
-                <div class="person-card female">
+                <div class="person-card female" id="p7">
                     <div class="name-display" id="p7-name">Emma<br>Presler</div>
+                    <div class="info-display" id="p7-info"><div>* 2018</div><div>Lebend</div></div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Die Eingabemaske -->
+    <div class="form-container" id="formBox">
+        <div class="form-title" id="formTitle">Person bearbeiten</div>
+        <form id="personForm">
+            <input type="hidden" id="activeId">
+            <input type="text" id="firstName" placeholder="Vorname" required>
+            <input type="text" id="lastName" placeholder="Nachname" required>
+            <input type="text" id="birthDate" placeholder="Geburtsdatum">
+            <input type="text" id="birthPlace" placeholder="Geburtsort">
+            <select id="gender">
+                <option value="m">Männlich (Blauer Rand)</option>
+                <option value="f">Weiblich (Rosa Rand)</option>
+            </select>
+            <input type="text" id="deathDate" placeholder="Todestag (leer lassen wenn lebend)">
+            <button type="submit" class="submit-btn full-width">Speichern</button>
+            <button type="button" class="cancel-btn full-width" onclick="closeForm()">Abbrechen</button>
+        </form>
+    </div>
+
+    <script>
+        var dataset = {
+            "p1": { first: "Alexander", last: "Presler", birth: "1982", place: "München", gender: "m", death: "" },
+            "p2": { first: "Vladimir", last: "Lagutochkin", birth: "1959", place: "", gender: "m", death: "" },
+            "p3": { first: "Swetlana", last: "Presler", birth: "1961", place: "", gender: "f", death: "" },
+            "p4": { first: "Uropa", last: "Lagutochkin", birth: "1920", place: "", gender: "m", death: "1995" },
+            "p5": { first: "Raisa", last: "Gredneva", birth: "1941", place: "", gender: "f", death: "12.10.2020" },
