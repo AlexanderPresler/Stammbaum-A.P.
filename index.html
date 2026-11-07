@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Stammbaum Profi App</title>
+    <title>Stammbaum Exakt</title>
     <style>
         /* Kontrollzeile oben links */
         .version-stamp {
@@ -18,7 +18,7 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-            background-color: #f3f4f6;
+            background-color: #eef2f5;
             margin: 0;
             padding: 40px 10px 320px 10px;
             display: flex;
@@ -26,126 +26,88 @@
             align-items: center;
             min-height: 100vh;
             box-sizing: border-box;
+            overflow-x: auto;
         }
 
-        h1 {
-            font-size: 1.2rem;
-            color: #2c3e50;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        /* 🌳 Organigramm-Gitter für rechtwinklige Verbindungslinien */
-        .tree {
+        /* Haupt-Gitter für das exakte Layout aus dem Screenshot */
+        .tree-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 100%;
+            position: relative;
+            min-width: 750px;
+            padding-top: 20px;
         }
 
-        .tree ul {
-            padding-top: 25px;
-            position: relative;
+        /* Generationen-Ebenen */
+        .layer {
             display: flex;
             justify-content: center;
-            list-style-type: none;
-            padding-left: 0;
-            margin: 0;
-        }
-
-        .tree li {
-            text-align: center;
-            list-style-type: none;
+            width: 100%;
             position: relative;
-            padding: 25px 10px 0 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin-bottom: 45px;
         }
 
-        /* Horizontale Linien zwischen Geschwistern/Paaren */
-        .tree li::before, .tree li::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 50%;
-            border-top: 2px solid #bdc3c7;
-            width: 50%;
-            height: 25px;
-        }
-        .tree li::after {
-            right: auto;
-            left: 50%;
-            border-left: 2px solid #bdc3c7;
-        }
-
-        /* Entfernt äußere Linien bei Einzelkindern */
-        .tree li:only-child::after, .tree li:only-child::before {
-            display: none;
-        }
-        .tree li:only-child {
-            padding-top: 0;
-        }
-        .tree li:first-child::before, .tree li:last-child::after {
-            border: 0 none;
-        }
-        .tree li:last-child::before {
-            border-right: 2px solid #bdc3c7;
-            border-radius: 0 5px 0 0;
-        }
-        .tree li:first-child::after {
-            border-radius: 5px 0 0 0;
-        }
-
-        /* Vertikale Verbindungslinie nach unten zum Kind */
-        .tree ul ul::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            border-left: 2px solid #bdc3c7;
-            width: 0;
-            height: 25px;
-        }
-
-        /* Ehepartner-Block (Nebeneinander-Verbindung) */
-        .couple-wrapper {
+        /* Ehepartner-Einheit nebeneinander */
+        .couple-node {
             display: flex;
             align-items: center;
-            gap: 12px;
             position: relative;
         }
-        .couple-wrapper::after {
+
+        /* Horizontale Verbindungslinie direkt zwischen Ehepartnern */
+        .couple-node::before {
             content: "";
             position: absolute;
-            bottom: -25px;
-            left: 50%;
-            width: 2px;
-            height: 25px;
-            background: #bdc3c7;
+            top: 50%;
+            left: 95px; /* Genau zwischen Karte 1 und Karte 2 */
+            width: 30px;
+            height: 2px;
+            background: #a0aec0;
             z-index: 1;
         }
 
-        /* 📇 Personenkarten-Design aus dem Screenshot */
+        /* Vertikaler Abzweig von der Ehelinie nach unten zum Kind */
+        .couple-node::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 110px; /* Die exakte Mitte der Ehelinie */
+            width: 2px;
+            height: 50px;
+            background: #a0aec0;
+            z-index: 1;
+        }
+        .layer-children .couple-node::after { display: none; } /* Keine Abzweigung nach unten bei der untersten Ebene */
+
+        /* Individuelle Abstands-Korrekturen für exakte zentrierte Spaltenverbindung */
+        #layer-grandparents { gap: 120px; }
+        #layer-parents { gap: 0; }
+        #layer-self { gap: 0; }
+
+        /* 📇 Personenkarten-Design exakt aus dem Screenshot */
         .card {
-            width: 110px;
-            min-height: 110px;
+            width: 95px;
+            min-height: 115px;
             background: white;
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 10px 6px;
+            padding: 10px 4px;
             box-sizing: border-box;
-            border: 2px solid transparent;
             position: relative;
             cursor: pointer;
+            z-index: 10;
+            border-bottom: 4px solid #cbd5e0;
             -webkit-tap-highlight-color: transparent;
         }
-        .card.male { border-color: #3498db; }
-        .card.female { border-color: #f78fb3; }
+        .card:active { background-color: #f7fafc; }
+        
+        /* Farbcodierung exakt als dicke obere Linie */
+        .card.male { border-top: 4px solid #3182ce; }
+        .card.female { border-top: 4px solid #d53f8c; }
 
         /* Schwarzes Trauer-Dreieck oben links */
         .card.deceased::before {
@@ -155,53 +117,57 @@
             left: 0;
             width: 0;
             height: 0;
-            border-top: 22px solid black;
-            border-right: 22px solid transparent;
-            border-top-left-radius: 9px;
+            border-top: 20px solid #000000;
+            border-right: 20px solid transparent;
+            border-top-left-radius: 10px;
             z-index: 15;
         }
 
         /* Gestrichelte Plus-Karten aus dem Screenshot */
         .card.placeholder {
-            border: 2px dashed #bdc3c7;
-            background: #f8f9fa;
-            color: #7f8c8d;
+            border: 2px dashed #a0aec0;
+            background: #f7fafc;
+            border-top: 2px dashed #a0aec0;
         }
         .card.placeholder .plus-icon {
             width: 24px;
             height: 24px;
             border-radius: 50%;
-            background: #7f8c8d;
+            background: #718096;
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
             font-size: 1rem;
-            margin-bottom: 6px;
+            margin-top: 15px;
+            margin-bottom: 8px;
         }
         .card.placeholder .label-text {
             font-size: 0.65rem;
-            font-weight: bold;
+            color: #718096;
+            font-weight: 500;
             line-height: 1.2;
+            text-align: center;
         }
 
         .avatar-circle {
-            width: 36px;
-            height: 36px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
-            background: #eee;
-            margin-bottom: 6px;
+            margin-top: 5px;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
+            overflow: hidden;
         }
-        .card.male .avatar-circle { background: #e3f2fd; color: #3498db; }
-        .card.female .avatar-circle { background: #fce4ec; color: #f78fb3; }
+        .card.male .avatar-circle { background: #ebf8ff; color: #2b6cb0; }
+        .card.female .avatar-circle { background: #fff5f5; color: #b83280; }
 
-        .name-text { font-weight: bold; font-size: 0.75rem; color: #2c3e50; line-height: 1.2; }
-        .info-text { font-size: 0.6rem; color: #7f8c8d; margin-top: 2px; }
+        .name-text { font-weight: 700; font-size: 0.7rem; color: #2d3748; line-height: 1.2; text-align: center; }
+        .info-text { font-size: 0.6rem; color: #718096; margin-top: 3px; text-align: center; }
 
         /* 📱 Eingabemaske am unteren Bildschirmrand */
         .form-container {
@@ -222,49 +188,61 @@
         form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         input, select, button { padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.85rem; box-sizing: border-box; }
         .full-width { grid-column: span 2; }
-        button.submit-btn { background: #2ecc71; color: white; border: none; font-weight: bold; }
-        button.cancel-btn { background: #95a5a6; color: white; border: none; }
+        button.submit-btn { background: #2ecc71; color: white; border: none; font-weight: bold; cursor: pointer; }
+        button.cancel-btn { background: #95a5a6; color: white; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <!-- Präzise Kontrollzeile zur Erkennung von Code-Updates -->
-    <div class="version-stamp">Erstellt am: 07.11.2026, 14:55:00 Uhr | Version: 1.0</div>
+    <div class="version-stamp">Erstellt am: 07.11.2026, 15:05:00 Uhr | Version: 2.0</div>
 
-    <h1>🌳 Mein Stammbaum</h1>
+    <div class="tree-container" id="interactiveTree">
+        
+        <!-- Ebene 1: Urgroßeltern / Großeltern der Partner getrennt -->
+        <div class="layer" id="layer-grandparents">
+            <!-- Ahnenlinie Vater (Vladimir) -->
+            <div class="couple-node">
+                <div class="card placeholder" data-id="p4" data-gender="m" data-label="Vater"><div class="plus-icon">+</div><div class="label-text">Vater<br>hinzufügen</div></div>
+                <div style="width: 30px;"></div>
+                <div class="card female deceased" data-id="p5" data-gender="f"><div class="avatar-circle">👩</div><div class="name-text" id="p5-name">Raisa<br>Gredneva</div><div class="info-text" id="p5-info">1941<br>† 2020</div></div>
+            </div>
+            <!-- Ahnenlinie Mutter (Swetlana) -->
+            <div class="couple-node">
+                <div class="card placeholder" data-id="p8" data-gender="m" data-label="Vater"><div class="plus-icon">+</div><div class="label-text">Vater<br>hinzufügen</div></div>
+                <div style="width: 30px;"></div>
+                <div class="card placeholder" data-id="p9" data-gender="f" data-label="Mutter"><div class="plus-icon">+</div><div class="label-text">Mutter<br>hinzufügen</div></div>
+            </div>
+        </div>
+        
+        <!-- Ebene 2: Eltern (Vladimir und Swetlana kommen aus getrennten Ahnen) -->
+        <div class="layer" id="layer-parents">
+            <div class="couple-node">
+                <div class="card male" data-id="p2" data-gender="m"><div class="avatar-circle">👤</div><div class="name-text" id="p2-name">Vladimir<br>Lagutochkin</div><div class="info-text" id="p2-info">1959<br>Lebend</div></div>
+                <div style="width: 30px;"></div>
+                <div class="card female" data-id="p3" data-gender="f"><div class="avatar-circle">👩</div><div class="name-text" id="p3-name">Swetlana<br>Presler</div><div class="info-text" id="p3-info">1961<br>Lebend</div></div>
+            </div>
+        </div>
+        
+        <!-- Ebene 3: Hauptpaar (Alexander und Elina) -->
+        <div class="layer" id="layer-self">
+            <div class="couple-node">
+                <div class="card male" data-id="p1" data-gender="m"><div class="avatar-circle">👤</div><div class="name-text" id="p1-name">Alexander<br>Presler</div><div class="info-text" id="p1-info">1982<br>Lebend</div></div>
+                <div style="width: 30px;"></div>
+                <div class="card female" data-id="p6" data-gender="f"><div class="avatar-circle">👩</div><div class="name-text" id="p6-name">Elina<br>Presler</div><div class="info-text" id="p6-info">1986<br>Lebend</div></div>
+            </div>
+        </div>
+        
+        <!-- Ebene 4: Kinder ganz unten -->
+        <div class="layer layer-children">
+            <div class="couple-node">
+                <div class="card female" data-id="p7" data-gender="f"><div class="avatar-circle">👩</div><div class="name-text" id="p7-name">Emma<br>Presler</div><div class="info-text" id="p7-info">2018<br>Lebend</div></div>
+            </div>
+        </div>
 
-    <div class="tree" id="mainTree">
-        <ul>
-            <li>
-                <!-- Ebene 1: Urgroßeltern / Großeltern-Paar links -->
-                <div class="couple-wrapper">
-                    <div class="card placeholder" data-id="p4" data-gender="m" data-label="Vater"><div class="plus-icon">+</div><div class="label-text">Vater<br>hinzufügen</div></div>
-                    <div class="card female deceased" data-id="p5" data-gender="f"><div class="avatar-circle">👩</div><div class="name-text" id="p5-name">Raisa<br>Gredneva</div><div class="info-text" id="p5-info">1941<br>† 2020</div></div>
-                </div>
-                <ul>
-                    <li>
-                        <!-- Ebene 2: Eltern-Paar -->
-                        <div class="couple-wrapper">
-                            <div class="card male" data-id="p2" data-gender="m"><div class="avatar-circle">👤</div><div class="name-text" id="p2-name">Vladimir<br>Lagutochkin</div><div class="info-text" id="p2-info">1959<br>Lebend</div></div>
-                            <div class="card female" data-id="p3" data-gender="f"><div class="avatar-circle">👩</div><div class="name-text" id="p3-name">Swetlana<br>Presler</div><div class="info-text" id="p3-info">1961<br>Lebend</div></div>
-                        </div>
-                        <ul>
-                            <li>
-                                <!-- Ebene 3: Hauptperson & Partnerin -->
-                                <div class="couple-wrapper">
-                                    <div class="card male" data-id="p1" data-gender="m"><div class="avatar-circle">👤</div><div class="name-text" id="p1-name">Alexander<br>Presler</div><div class="info-text" id="p1-info">1982<br>Lebend</div></div>
-                                    <div class="card female" data-id="p6" data-gender="f"><div class="avatar-circle">👩</div><div class="name-text" id="p6-name">Elina<br>Presler</div><div class="info-text" id="p6-info">1986<br>Lebend</div></div>
-                                </div>
-                                <ul>
-                                    <li>
-                                        <!-- Ebene 4: Kinder ganz unten -->
-                                        <div class="card female" data-id="p7" data-gender="f"><div class="avatar-circle">👩</div><div class="name-text" id="p7-name">Emma<br>Presler</div><div class="info-text" id="p7-info">2018<br>Lebend</div></div>
-                                    </li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </li>
-            <li>
-                <!-- Großeltern-Zweig rechts Platzhalter -->
+    </div>
+
+    <!-- Die Eingabemaske -->
+    <div class="form-container" id="formBox">
+        <div class="form-title" id="formTitle">Person bearbeiten</div>
+        <form id="personForm">
