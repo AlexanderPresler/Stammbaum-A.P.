@@ -3,122 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Stammbaum Profi</title>
+    <title>Stammbaum Profi App</title>
     <style>
+        /* Kontrollzeile oben links */
         .version-stamp {
-            position: absolute;
+            position: fixed;
             top: 5px;
             left: 10px;
             font-size: 0.65rem;
             color: #95a5a6;
             font-family: monospace;
-            z-index: 2000;
+            z-index: 3000;
         }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             background-color: #f3f4f6;
             margin: 0;
-            padding: 40px 10px 350px 10px;
+            padding: 40px 10px 320px 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
             box-sizing: border-box;
         }
-        h1 { 
-            font-size: 1.1rem; 
-            color: #2c3e50; 
-            margin-bottom: 25px;
+
+        h1 {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            margin-bottom: 30px;
             text-align: center;
         }
-        
-        /* Vollkommen zentrierte und schmale Struktur */
-        .tree-grid {
+
+        /* 🌳 Organigramm-Gitter für rechtwinklige Verbindungslinien */
+        .tree {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 35px;
             width: 100%;
-            max-width: 320px;
-            margin: 0 auto;
         }
-        
-        .layer {
+
+        .tree ul {
+            padding-top: 25px;
+            position: relative;
             display: flex;
             justify-content: center;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            position: relative;
+            list-style-type: none;
+            padding-left: 0;
+            margin: 0;
         }
-        .layer::after {
-            content: ""; position: absolute; bottom: -22px; left: 50%;
-            width: 2px; height: 22px; background: #bdc3c7; z-index: 1;
-        }
-        .layer:last-child::after { display: none; }
 
-        .couple-unit {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            position: relative;
-        }
-        
-        /* Personenkarten */
-        .person-card {
-            width: 72px; /* Schmaler gemacht, damit alle 4 Großeltern nebeneinander auf das Display passen */
-            background: white;
-            border-radius: 6px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+        .tree li {
             text-align: center;
-            padding: 8px 2px;
-            min-height: 90px;
-            border: 3px solid #bdc3c7;
+            list-style-type: none;
             position: relative;
+            padding: 25px 10px 0 10px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            box-sizing: border-box;
-        }
-        .person-card.male { border-color: #3498db; }
-        .person-card.female { border-color: #f78fb3; }
-        
-        .person-card.deceased::before {
-            content: ""; position: absolute; top: 0; left: 0; width: 0; height: 0;
-            border-top: 18px solid black; border-right: 18px solid transparent;
-            border-top-left-radius: 2px; z-index: 12;
+            align-items: center;
         }
 
-        .name-display { font-weight: bold; font-size: 0.65rem; color: #2c3e50; line-height: 1.2; }
-        .info-display { font-size: 0.55rem; color: #7f8c8d; line-height: 1.1; margin-bottom: 2px; }
-        .rings-label { font-size: 0.85rem; color: #f1c40f; z-index: 15; }
-        
-        /* Unblockierbarer blauer HTML-Link-Button */
-        .edit-link {
-            display: block;
-            background: #34495e;
-            color: white !important;
-            text-decoration: none !important;
-            font-size: 0.55rem;
+        /* Horizontale Linien zwischen Geschwistern/Paaren */
+        .tree li::before, .tree li::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 50%;
+            border-top: 2px solid #bdc3c7;
+            width: 50%;
+            height: 25px;
+        }
+        .tree li::after {
+            right: auto;
+            left: 50%;
+            border-left: 2px solid #bdc3c7;
+        }
+
+        /* Entfernt äußere Linien bei Einzelkindern */
+        .tree li:only-child::after, .tree li:only-child::before {
+            display: none;
+        }
+        .tree li:only-child {
+            padding-top: 0;
+        }
+        .tree li:first-child::before, .tree li:last-child::after {
+            border: 0 none;
+        }
+        .tree li:last-child::before {
+            border-right: 2px solid #bdc3c7;
+            border-radius: 0 5px 0 0;
+        }
+        .tree li:first-child::after {
+            border-radius: 5px 0 0 0;
+        }
+
+        /* Vertikale Verbindungslinie nach unten zum Kind */
+        .tree ul ul::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            border-left: 2px solid #bdc3c7;
+            width: 0;
+            height: 25px;
+        }
+
+        /* Ehepartner-Block (Nebeneinander-Verbindung) */
+        .couple-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+        }
+        .couple-wrapper::after {
+            content: "";
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            width: 2px;
+            height: 25px;
+            background: #bdc3c7;
+            z-index: 1;
+        }
+
+        /* 📇 Personenkarten-Design aus dem Screenshot */
+        .card {
+            width: 110px;
+            min-height: 110px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 6px;
+            box-sizing: border-box;
+            border: 2px solid transparent;
+            position: relative;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .card.male { border-color: #3498db; }
+        .card.female { border-color: #f78fb3; }
+
+        /* Schwarzes Trauer-Dreieck oben links */
+        .card.deceased::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-top: 22px solid black;
+            border-right: 22px solid transparent;
+            border-top-left-radius: 9px;
+            z-index: 15;
+        }
+
+        /* Gestrichelte Plus-Karten aus dem Screenshot */
+        .card.placeholder {
+            border: 2px dashed #bdc3c7;
+            background: #f8f9fa;
+            color: #7f8c8d;
+        }
+        .card.placeholder .plus-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #7f8c8d;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-weight: bold;
-            padding: 3px 0;
-            border-radius: 3px;
-            width: 90%;
-            margin: 2px auto 0 auto;
-            text-align: center;
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+        .card.placeholder .label-text {
+            font-size: 0.65rem;
+            font-weight: bold;
+            line-height: 1.2;
         }
 
-        /* Eingabemaske am unteren Rand */
+        .avatar-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #eee;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+        .card.male .avatar-circle { background: #e3f2fd; color: #3498db; }
+        .card.female .avatar-circle { background: #fce4ec; color: #f78fb3; }
+
+        .name-text { font-weight: bold; font-size: 0.75rem; color: #2c3e50; line-height: 1.2; }
+        .info-text { font-size: 0.6rem; color: #7f8c8d; margin-top: 2px; }
+
+        /* 📱 Eingabemaske am unteren Bildschirmrand */
         .form-container {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background: white; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-            border-top-left-radius: 16px; border-top-right-radius: 16px;
-            max-height: 280px; overflow-y: auto; z-index: 4000; display: none;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 -4px 25px rgba(0,0,0,0.15);
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            max-height: 290px;
+            overflow-y: auto;
+            z-index: 2000;
+            display: none;
             box-sizing: border-box;
         }
-        .form-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 8px; color: #2c3e50; }
+        .form-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 10px; color: #2c3e50; }
         form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        input, select, button { padding: 9px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box; }
+        input, select, button { padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.85rem; box-sizing: border-box; }
         .full-width { grid-column: span 2; }
         button.submit-btn { background: #2ecc71; color: white; border: none; font-weight: bold; }
         button.cancel-btn { background: #95a5a6; color: white; border: none; }
@@ -126,107 +228,43 @@
 </head>
 <body>
 
-    <!-- Kontrollzeile -->
-    <div class="version-stamp">Coderstellung: 06.11.2026, 23:30:00 Uhr | Version: 15.0</div>
+    <!-- Präzise Kontrollzeile zur Erkennung von Code-Updates -->
+    <div class="version-stamp">Erstellt am: 07.11.2026, 14:55:00 Uhr | Version: 1.0</div>
 
-    <h1>🌳 Mein Stammbaum Profi</h1>
+    <h1>🌳 Mein Stammbaum</h1>
 
-    <!-- Komplett herangezoomtes und zentriertes HTML-Diagramm -->
-    <div class="tree-grid">
-        
-        <!-- Schicht 1: Großeltern -->
-        <div class="layer">
-            <div class="couple-unit">
-                <div class="person-card male deceased">
-                    <div class="name-display" id="p4-name">Uropa<br>Lagutochkin</div>
-                    <div class="info-display" id="p4-info"><div>* 1920</div><div>† 1995</div></div>
-                    <a href="javascript:void(0);" class="edit-link" onclick="openForm('p4')">✏️ Ändern</a>
+    <div class="tree" id="mainTree">
+        <ul>
+            <li>
+                <!-- Ebene 1: Urgroßeltern / Großeltern-Paar links -->
+                <div class="couple-wrapper">
+                    <div class="card placeholder" data-id="p4" data-gender="m" data-label="Vater"><div class="plus-icon">+</div><div class="label-text">Vater<br>hinzufügen</div></div>
+                    <div class="card female deceased" data-id="p5" data-gender="f"><div class="avatar-circle">👩</div><div class="name-text" id="p5-name">Raisa<br>Gredneva</div><div class="info-text" id="p5-info">1941<br>† 2020</div></div>
                 </div>
-                <div class="rings-label">💍</div>
-                <div class="person-card female deceased">
-                    <div class="name-display" id="p5-name">Raisa<br>Gredneva</div>
-                    <div class="info-display" id="p5-info"><div>* 1941</div><div>† 2020</div></div>
-                    <a href="javascript:void(0);" class="edit-link" onclick="openForm('p5')">✏️ Ändern</a>
-                </div>
-            </div>
-            <div class="couple-unit">
-                <div class="person-card male deceased">
-                    <div class="name-display" id="p8-name">Großvater<br>Presler</div>
-                    <div class="info-display" id="p8-info"><div>* 1930</div><div>† 2005</div></div>
-                    <a href="javascript:void(0);" class="edit-link" onclick="openForm('p8')">✏️ Ändern</a>
-                </div>
-                <div class="rings-label">💍</div>
-                <div class="person-card female">
-                    <div class="name-display" id="p9-name">Großmutter<br>Presler</div>
-                    <div class="info-display" id="p9-info"><div>* 1935</div><div>Lebend</div></div>
-                    <a href="javascript:void(0);" class="edit-link" onclick="openForm('p9')">✏️ Ändern</a>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Schicht 2: Eltern -->
-        <div class="layer">
-            <div class="couple-unit">
-                <div class="person-card male">
-                    <div class="name-display" id="p2-name">Vladimir<br>Lagutochkin</div>
-                    <div class="info-display" id="p2-info"><div>* 1959</div><div>Lebend</div></div>
-                    <a href="javascript:void(0);" class="edit-link" onclick="openForm('p2')">✏️ Ändern</a>
-                </div>
-                <div class="rings-label">💍</div>
-                <div class="person-card female">
-                    <div class="name-display" id="p3-name">Swetlana<br>Presler</div>
-                    <div class="info-display" id="p3-info"><div>* 1961</div><div>Lebend</div></div>
-                    <a href="javascript:void(0);" class="edit-link" onclick="openForm('p3')">✏️ Ändern</a>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Schicht 3: Ich -->
-        <div class="layer">
-            <div class="couple-unit">
-                <div class="person-card male">
-                    <div class="name-display" id="p1-name">Alexander<br>Presler</div>
-                    <div class="info-display" id="p1-info"><div>* 1982</div><div>📍 MUC</div><div>Lebend</div></div>
-                    <a href="javascript:void(0);" class="edit-link" onclick="openForm('p1')">✏️ Ändern</a>
-                </div>
-                <div class="rings-label">💍</div>
-                <div class="person-card female">
-                    <div class="name-display" id="p6-name">Elina<br>Presler</div>
-                    <div class="info-display" id="p6-info"><div>* 1986</div><div>Lebend</div></div>
-                    <a href="javascript:void(0);" class="edit-link" onclick="openForm('p6')">✏️ Ändern</a>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Schicht 4: Kinder -->
-        <div class="layer">
-            <div class="person-card female">
-                <div class="name-display" id="p7-name">Emma<br>Presler</div>
-                <div class="info-display" id="p7-info"><div>* 2018</div><div>Lebend</div></div>
-                <a href="javascript:void(0);" class="edit-link" onclick="openForm('p7')">✏️ Ändern</a>
-            </div>
-        </div>
-        
-    </div>
-
-    <!-- Das Formular -->
-    <div class="form-container" id="formBox">
-        <div class="form-title" id="formTitle">Person bearbeiten</div>
-        <form id="personForm">
-            <input type="hidden" id="activeId">
-            <input type="text" id="firstName" placeholder="Vorname" required>
-            <input type="text" id="lastName" placeholder="Nachname" required>
-            <input type="text" id="birthDate" placeholder="Geburtsdatum">
-            <input type="text" id="birthPlace" placeholder="Geburtsort">
-            <select id="gender">
-                <option value="m">Männlich (Blauer Rand)</option>
-                <option value="f">Weiblich (Rosa Rand)</option>
-            </select>
-            <input type="text" id="deathDate" placeholder="Todestag (leer lassen wenn lebend)">
-            <button type="submit" class="submit-btn full-width">Speichern</button>
-            <button type="button" class="cancel-btn full-width" onclick="closeForm()">Abbrechen</button>
-        </form>
-    </div>
-
-    <script>
-        var dataset = {
+                <ul>
+                    <li>
+                        <!-- Ebene 2: Eltern-Paar -->
+                        <div class="couple-wrapper">
+                            <div class="card male" data-id="p2" data-gender="m"><div class="avatar-circle">👤</div><div class="name-text" id="p2-name">Vladimir<br>Lagutochkin</div><div class="info-text" id="p2-info">1959<br>Lebend</div></div>
+                            <div class="card female" data-id="p3" data-gender="f"><div class="avatar-circle">👩</div><div class="name-text" id="p3-name">Swetlana<br>Presler</div><div class="info-text" id="p3-info">1961<br>Lebend</div></div>
+                        </div>
+                        <ul>
+                            <li>
+                                <!-- Ebene 3: Hauptperson & Partnerin -->
+                                <div class="couple-wrapper">
+                                    <div class="card male" data-id="p1" data-gender="m"><div class="avatar-circle">👤</div><div class="name-text" id="p1-name">Alexander<br>Presler</div><div class="info-text" id="p1-info">1982<br>Lebend</div></div>
+                                    <div class="card female" data-id="p6" data-gender="f"><div class="avatar-circle">👩</div><div class="name-text" id="p6-name">Elina<br>Presler</div><div class="info-text" id="p6-info">1986<br>Lebend</div></div>
+                                </div>
+                                <ul>
+                                    <li>
+                                        <!-- Ebene 4: Kinder ganz unten -->
+                                        <div class="card female" data-id="p7" data-gender="f"><div class="avatar-circle">👩</div><div class="name-text" id="p7-name">Emma<br>Presler</div><div class="info-text" id="p7-info">2018<br>Lebend</div></div>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <!-- Großeltern-Zweig rechts Platzhalter -->
